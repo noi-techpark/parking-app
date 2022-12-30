@@ -257,7 +257,6 @@ export default {
 
   methods: {
     autoFetch(fetch) {
-      console.log('AUTO_FETCH', fetch)
       if (fetch) {
         this.$fetch()
       }
