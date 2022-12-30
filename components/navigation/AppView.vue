@@ -96,7 +96,7 @@
 export default {
   data() {
     return {
-      AUTO_FETCH_TIMEOUT: 300000,
+      AUTO_FETCH_TIMEOUT: 30000,
       BAR_EXPANSION_TOGGLE_OFFSET: 150,
       MAP_OPTIONS: {
         streetViewControl: true,
@@ -257,6 +257,7 @@ export default {
 
   methods: {
     autoFetch(fetch) {
+      console.log('AUTO_FETCH', fetch)
       if (fetch) {
         this.$fetch()
       }
