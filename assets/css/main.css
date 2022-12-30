@@ -1,0 +1,43 @@
+/**
+* Global css definitions
+*
+* IMPORTANT: This file should contain the smallest number of
+* definitions, which are globally available in the entire platform.
+*
+* Please use your brain before adding a new definition.
+*
+**/
+svg {
+  @apply inline-block;
+}
+
+.clickable {
+  @apply transition-opacity duration-200 cursor-pointer;
+
+  &:active {
+    @apply transition-none;
+
+    opacity: 0.6 !important;
+  }
+}
+
+.center {
+  width: 970px;
+  margin: 0 auto;
+}
+
+.title-desc {
+  @apply text-lg;
+
+  color: rgba(0, 0, 0, 0.5);
+  max-width: 600px;
+}
+
+@media only screen and (max-width: 980px) {
+  .center {
+    @apply w-auto;
+
+    margin-right: 25px;
+    margin-left: 25px;
+  }
+}

@@ -1,0 +1,113 @@
+/**
+* Global animations
+*
+* IMPORTANT: This file should contain the smallest number of
+* definitions, which are globally available in the entire platform.
+*
+* Please use your brain before adding a new definition.
+*
+**/
+
+/* Page transitions */
+.page {
+  transform-origin: top center;
+  transition: all 0.3s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.5s;
+}
+
+.page-enter,
+.page-leave-active {
+  @apply opacity-0;
+}
+
+.slide-left-enter,
+.slide-right-leave-active {
+  transform: translate(30px, 0);
+
+  @apply opacity-0;
+}
+
+.slide-left-leave-active,
+.slide-right-enter {
+  @apply opacity-0;
+
+  transform: translate(-30px, 0);
+}
+
+.zoom-page-enter {
+  @apply opacity-0;
+
+  transform: scale(0.97);
+}
+
+.zoom-page-leave-active {
+  @apply opacity-0;
+
+  transform: scale(1.03);
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in {
+  animation: slide-in 0.3s ease;
+}
+
+/* Placeholder elements */
+@keyframes blink-load {
+  0% {
+    @apply bg-placeholder;
+  }
+
+  40% {
+    background-color: #e0e0e0;
+  }
+
+  80% {
+    @apply bg-placeholder;
+  }
+}
+
+.placeholder.blink-load {
+  animation: blink-load 2s ease infinite;
+}
+
+/* Fades */
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.fade-out {
+  animation: fade-out 0.2s forwards;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.2s forwards;
+}
