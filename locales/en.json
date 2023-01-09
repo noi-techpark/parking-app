@@ -1,0 +1,22 @@
+{
+  "common": {
+    "freeSing": "Free",
+    "freePlur": "Free",
+    "occupied": "Full",
+    "parkingName": "Location name",
+    "searching": "Searhcing",
+    "noResultsFound": "No parkings found.",
+    "parkingStation": "Parking station",
+    "streetParking": "Street parking",
+    "totalParkingSlots": "{number} total slots",
+    "goToParking": "Go to parking",
+    "min": "min"
+  },
+
+  "places": {
+    "bolzano": "Bolzano",
+    "merano": "Merano",
+    "rovereto": "Rovereto",
+    "trento": "Trento"
+  }
+}
