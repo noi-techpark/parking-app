@@ -14,10 +14,8 @@ jobs:
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
-      - uses: noi-techpark/github-actions/npm-build@v2
-        with:
-          build-command: npm run build
-          node-version: ${{env.NODE_VERSION}}
+      - uses: noi-techpark/github-actions/yarn-test@v2
+
 
   deploy-test:
     runs-on: ubuntu-20.04
@@ -29,10 +27,7 @@ jobs:
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
-      - uses: noi-techpark/github-actions/npm-build@v2
-        with:
-          build-command: npm run build
-          node-version: ${{env.NODE_VERSION}}
+      - uses: noi-techpark/github-actions/yarn-build@v2
 
       - name: Sync to S3 bucket
         uses: noi-techpark/github-actions/aws-s3-bucket-sync@v2
