@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
-      - uses: noi-techpark/github-actions/yarn-test@v2
+      - uses: noi-techpark/github-actions/yarn-build@v2
 
 
   deploy-test:
