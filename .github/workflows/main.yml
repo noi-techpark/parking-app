@@ -28,6 +28,8 @@ jobs:
       - uses: noi-techpark/github-actions/checkout@v2
 
       - uses: noi-techpark/github-actions/yarn-build@v2
+        with:
+          build-command: yarn generate
 
       - name: Sync to S3 bucket
         uses: noi-techpark/github-actions/aws-s3-bucket-sync@v2
@@ -48,16 +50,15 @@ jobs:
   #   steps:
   #     - uses: noi-techpark/github-actions/checkout@v2
 
-  #     - uses: noi-techpark/github-actions/npm-build@v2
-  #       with:
-  #         build-command: npm run build
-  #         node-version: ${{env.NODE_VERSION}}
+  #    - uses: noi-techpark/github-actions/yarn-build@v2
+  #      with:
+  #        build-command: yarn generate
 
-  #     - name: Sync to S3 bucket
-  #       uses: noi-techpark/github-actions/aws-s3-bucket-sync@v2
-  #       with:
-  #         access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-  #         secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-  #         region: ${{ env.AWS_REGION }}
-  #         s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
-  #         folder: ./dist
+  #    - name: Sync to S3 bucket
+  #      uses: noi-techpark/github-actions/aws-s3-bucket-sync@v2
+  #      with:
+  #        access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+  #        secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+  #        region: ${{ env.AWS_REGION }}
+  #        s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
+  #        folder: ./dist
