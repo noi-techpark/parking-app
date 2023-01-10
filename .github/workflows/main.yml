@@ -16,7 +16,7 @@ jobs:
 
       - uses: noi-techpark/github-actions/npm-build@v2
         with:
-          build-command: yarn build
+          build-command: npm run build
           node-version: ${{env.NODE_VERSION}}
 
   deploy-test:
@@ -31,7 +31,7 @@ jobs:
 
       - uses: noi-techpark/github-actions/npm-build@v2
         with:
-          build-command: yarn generate
+          build-command: npm run build
           node-version: ${{env.NODE_VERSION}}
 
       - name: Sync to S3 bucket
@@ -55,7 +55,7 @@ jobs:
 
   #     - uses: noi-techpark/github-actions/npm-build@v2
   #       with:
-  #         build-command: yarn generate
+  #         build-command: npm run build
   #         node-version: ${{env.NODE_VERSION}}
 
   #     - name: Sync to S3 bucket
