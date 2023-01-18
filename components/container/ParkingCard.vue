@@ -26,9 +26,13 @@
       <h2>{{ name }}</h2>
       <div class="graph-ct">
         <ParkingAvailabilityGraph
+          v-if="data.stype === 'ParkingStation'"
           :forecast="data.forecast"
           :limit-dataset="4"
         />
+        <p v-else class="park-notice">
+          {{ $t('common.noForecastsAvailable') }}
+        </p>
       </div>
     </div>
   </div>
@@ -110,7 +114,17 @@ export default {
 
     & .graph-ct {
       @apply w-full;
+
+      & .park-notice {
+        @apply text-grey text-sm;
+      }
     }
+  }
+}
+
+@media only screen and (min-width: 980px) {
+  .parking-card {
+    width: 310px;
   }
 }
 </style>

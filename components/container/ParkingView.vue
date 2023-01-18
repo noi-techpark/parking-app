@@ -36,16 +36,27 @@
         :available="data.mvalue"
       />
     </div>
-    <div class="graph-ct">
+    <div v-if="data.stype === 'ParkingStation'" class="graph-ct">
       <ParkingAvailabilityGraph :forecast="data.forecast" />
     </div>
-    <Button
-      icon="start-navigation"
-      :value="$t('common.goToParking')"
-      fill-width
-      class="navigation-bt"
-      @click="startNavigationToParking"
-    />
+    <a
+      :href="
+        'https://www.google.com/maps?saddr=&daddr=' +
+        data.scoordinate.y +
+        ',' +
+        data.scoordinate.x +
+        '&directionsmode=driving'
+      "
+      target="_blank"
+    >
+      <Button
+        icon="start-navigation"
+        :value="$t('common.goToParking')"
+        fill-width
+        class="navigation-bt"
+        @click="startNavigationToParking"
+      />
+    </a>
   </div>
 </template>
 
