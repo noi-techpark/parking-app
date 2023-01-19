@@ -10,6 +10,7 @@
     "streetParking": "Street parking",
     "totalParkingSlots": "{number} total slots",
     "goToParking": "Go to parking",
+    "noForecastsAvailable": "No forecasts available.",
     "min": "min"
   },
 

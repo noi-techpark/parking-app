@@ -18,7 +18,7 @@
     >
       <vl-view
         :zoom.sync="zoom"
-        :center.sync="showCenter"
+        :center.sync="center"
         :rotation.sync="rotation"
       ></vl-view>
 
@@ -94,10 +94,10 @@ export default {
   data() {
     return {
       DEFAULT_CONFIG: {
-        ZOOM: 14,
         CENTER: [11.3536166, 46.4981249],
         ROTATION: 0,
       },
+      zoom: 14,
       isMounted: false,
     }
   },
@@ -106,18 +106,30 @@ export default {
     rotation() {
       return this.DEFAULT_CONFIG.ROTATION
     },
+  },
 
-    zoom() {
-      return this.options.zoom || this.DEFAULT_CONFIG.ZOOM
+  watch: {
+    zoom(newZoom) {
+      this.zoomUpdate(newZoom)
     },
 
-    showCenter() {
-      return this.center || this.DEFAULT_CONFIG.CENTER
+    center(newCenter) {
+      this.showCenter = newCenter
     },
   },
 
   mounted() {
     this.isMounted = true
+  },
+
+  created() {
+    if (this.options.zoom) {
+      this.zoom = this.options.zoom
+    }
+
+    if (!this.center) {
+      this.showCenter = this.center
+    }
   },
 
   methods: {
@@ -162,7 +174,6 @@ export default {
     },
 
     clickedMarker(item) {
-      console.log('CLICKED_MARK', item)
       this.$emit('clickedMarker', item)
     },
 
@@ -195,6 +206,10 @@ export default {
       }
 
       return 'green'
+    },
+
+    zoomUpdate(newZoom) {
+      this.$emit('zoomUpdate', newZoom)
     },
   },
 }

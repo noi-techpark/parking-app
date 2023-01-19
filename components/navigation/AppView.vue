@@ -1,16 +1,18 @@
 <template>
   <main>
-    <div class="map-ct">
+    <div class="map-ct-up">
       <Map
         ref="map"
         :markers="mapMarkers"
         :center="mapCenter"
         :options="MAP_OPTIONS"
         map-type="roadmap"
+        @zoomUpdate="handleZoomUpdate"
         @clickedMarker="clickedMarker"
       />
     </div>
     <div class="controls">
+      <icon name="extended-logo" class="extended-logo" />
       <div class="search-bar">
         <div class="search-ct">
           <div class="logo">
@@ -37,7 +39,7 @@
             <div v-else class="results-list">
               <ParkingCard
                 v-for="parkingCard in searchResults"
-                :key="parkingCard.sname"
+                :key="parkingCard.id"
                 :data="parkingCard"
                 class="res-card"
                 @click.native="showParkingDetails(parkingCard)"
@@ -70,7 +72,7 @@
         <div class="parking-cards">
           <ParkingCard
             v-for="parkingCard in visibleParkingCards"
-            :key="parkingCard.prname"
+            :key="parkingCard.id"
             :data="parkingCard"
             class="card"
             @click.native="showParkingDetails(parkingCard)"
@@ -108,7 +110,10 @@ export default {
 
       searchValue: '',
       isSearching: false,
+      parkingStations: null,
+      onStreetParkings: null,
       parkingCards: [],
+      mapData: [],
       parkingDetailsModal: {
         data: null,
         isVisible: false,
@@ -124,43 +129,29 @@ export default {
       },
       currentLocation: 'bolzano',
       expandedLocationsBar: false,
+      groupStreetParkings: true,
     }
   },
 
   async fetch() {
-    let parkings = []
-
-    const parkingStations = await this.$axios
+    this.parkingStations = await this.$axios
       .$get(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1'
       )
       .catch((error) => {
         this.handleError(error)
       })
 
-    if (parkingStations?.data) {
-      parkings = [
-        ...parkings,
-        ...this.normalizeParkingDataset(parkingStations?.data),
-      ]
-    }
-
-    const onStreetParkings = await this.$axios
+    this.onStreetParkings = await this.$axios
       .$get(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1'
       )
       .catch((error) => {
         this.handleError(error)
       })
 
-    if (onStreetParkings?.data) {
-      parkings = [
-        ...parkings,
-        ...this.normalizeParkingDataset(onStreetParkings?.data),
-      ]
-    }
-
-    this.parkingCards = parkings
+    this.constructData()
+    this.constructMapData()
   },
 
   computed: {
@@ -220,7 +211,7 @@ export default {
     },
 
     mapMarkers() {
-      return this.visibleParkingCards.map((card) => ({
+      return this.mapData.map((card) => ({
         stype: card.stype,
         mvalue: card.mvalue,
         smetadata: {
@@ -253,15 +244,63 @@ export default {
   mounted() {
     this.autoFetch(false)
     this.bindDragEvents()
+    this.checkRoute()
   },
 
   methods: {
+    constructData() {
+      let parkings = []
+
+      if (this.parkingStations?.data) {
+        parkings = [
+          ...parkings,
+          ...this.normalizeParkingDataset(this.parkingStations?.data),
+        ]
+      }
+
+      if (this.onStreetParkings?.data) {
+        parkings = [
+          ...parkings,
+          ...this.normalizeParkingDataset(this.onStreetParkings?.data),
+        ]
+      }
+
+      this.parkingCards = parkings
+    },
+
+    constructMapData() {
+      let parkings = []
+
+      if (this.parkingStations?.data) {
+        parkings = [
+          ...parkings,
+          ...this.normalizeParkingDataset(this.parkingStations?.data, true),
+        ]
+      }
+
+      if (this.onStreetParkings?.data) {
+        parkings = [
+          ...parkings,
+          ...this.normalizeParkingDataset(this.onStreetParkings?.data, true),
+        ]
+      }
+
+      this.mapData = parkings
+    },
+
     autoFetch(fetch) {
       if (fetch) {
         this.$fetch()
       }
 
       setTimeout(() => this.autoFetch(true), this.AUTO_FETCH_TIMEOUT)
+    },
+
+    checkRoute() {
+      const locationId = this.$route.query.loc
+      if (locationId && this.locations.find((loc) => loc.id === locationId)) {
+        this.currentLocation = locationId
+      }
     },
 
     getLocationBlock(id, name, center, municipalityId) {
@@ -275,6 +314,10 @@ export default {
 
     setCurrentLocation(locationId) {
       this.currentLocation = locationId
+      this.$router.replace({
+        name: this.$router.name,
+        query: { loc: locationId },
+      })
       this.$refs.map.render()
     },
 
@@ -295,27 +338,61 @@ export default {
       // TODO: add here redirect
     },
 
-    normalizeParkingDataset(dataset) {
+    normalizeParkingDataset(dataset, forMapData) {
       const rawData = {}
 
       // Group values by m-period
+      const baseId = new Date().getTime()
       dataset.forEach((parking) => {
-        if (!rawData[parking.sname]) {
-          rawData[parking.sname] = { ...parking }
-          rawData[parking.sname].forecast = []
+        const doGrouping =
+          forMapData &&
+          this.groupStreetParkings &&
+          parking.stype === 'ParkingSensor' &&
+          typeof parking.smetadata.group !== 'undefined'
+
+        let parkingId = null
+        if (doGrouping) {
+          parkingId = baseId + '-' + parking.smetadata.group
+        } else {
+          parkingId =
+            baseId +
+            '-' +
+            parking.sname +
+            '_' +
+            parking.scoordinate.x +
+            '_' +
+            parking.scoordinate.y
         }
 
-        if (rawData[parking.sname].mperiod >= parking.mperiod) {
-          rawData[parking.sname].mperiod = parking.mperiod
-          rawData[parking.sname].mvalue = Math.round(parking.mvalue)
+        if (!rawData[parkingId]) {
+          rawData[parkingId] = { ...parking }
+          rawData[parkingId].id = parkingId
+          rawData[parkingId].forecast = []
+
+          if (doGrouping) {
+            rawData[parkingId].smetadata.capacity = 0
+          }
         }
 
-        rawData[parking.sname].forecast.push({
+        if (doGrouping) {
+          rawData[parkingId].mperiod = rawData[parkingId].mperiod +=
+            parking.mperiod
+          rawData[parkingId].mvalue = rawData[parkingId].mvalue += Math.round(
+            parking.mvalue
+          )
+
+          rawData[parkingId].smetadata.capacity += 1
+        } else if (rawData[parkingId].mperiod >= parking.mperiod) {
+          rawData[parkingId].mperiod = parking.mperiod
+          rawData[parkingId].mvalue = Math.round(parking.mvalue)
+        }
+
+        rawData[parkingId].forecast.push({
           mperiod: parking.mperiod,
           mvalue: Math.round(parking.mvalue),
         })
 
-        rawData[parking.sname].forecast = rawData[parking.sname].forecast.sort(
+        rawData[parkingId].forecast = rawData[parkingId].forecast.sort(
           (a, b) => a.mperiod - b.mperiod
         )
       })
@@ -416,7 +493,7 @@ export default {
       this.$refs.locationsBar.classList.add('no-transitions')
       this.$refs.locationsBar.style.transform =
         'translate3d(0px, calc(' +
-        (this.expandedLocationsBar ? 0 : 50) +
+        (this.expandedLocationsBar ? 0 : 35) +
         'vh + ' +
         yPos +
         'px), 0)'
@@ -444,6 +521,20 @@ export default {
       this.dragInfo.xOffset = 0
       this.dragInfo.yOffset = 0
     },
+
+    handleZoomUpdate(newZoom) {
+      const oldGroupingPref = this.groupStreetParkings
+
+      if (newZoom > 14) {
+        this.groupStreetParkings = false
+      } else {
+        this.groupStreetParkings = true
+      }
+
+      if (oldGroupingPref !== this.groupStreetParkings) {
+        this.$nextTick(() => this.constructMapData(true))
+      }
+    },
   },
 }
 </script>
@@ -452,7 +543,7 @@ export default {
 main {
   @apply w-full h-full overflow-hidden;
 
-  & .map-ct {
+  & .map-ct-up {
     @apply w-full h-full;
   }
 
@@ -460,6 +551,10 @@ main {
     @apply absolute top-0 left-5;
 
     width: 350px;
+
+    & .extended-logo {
+      @apply hidden;
+    }
 
     & .search-bar {
       @apply mt-8;
@@ -580,7 +675,7 @@ main {
 
         max-height: initial;
         height: calc(100vh - 250px);
-        transform: translateY(50vh);
+        transform: translateY(35vh);
 
         & .grip-ct {
           @apply sticky flex top-0 bg-white;
@@ -594,6 +689,46 @@ main {
 
         &.expanded {
           @apply transform-none;
+        }
+      }
+    }
+  }
+}
+
+@media only screen and (min-width: 980px) {
+  main {
+    & .map-ct-up {
+      @apply w-1/2;
+
+      margin-left: 50%;
+    }
+
+    & .controls {
+      @apply h-full;
+
+      width: calc(50vw - 3rem);
+
+      & .extended-logo {
+        @apply block mx-5 h-10 mt-10;
+      }
+
+      & .search-bar {
+        @apply mx-5 mt-4;
+
+        & .logo {
+          @apply hidden !important;
+        }
+
+        & .search-ct {
+          @apply bg-input;
+        }
+      }
+
+      & .locations-bar {
+        max-height: calc(100% - 155px);
+
+        & .parking-cards {
+          @apply flex flex-wrap gap-x-3;
         }
       }
     }
