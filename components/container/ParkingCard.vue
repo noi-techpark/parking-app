@@ -18,7 +18,7 @@
       </span>
       <AvailableSlotsBadge
         :total="totalCapacity"
-        :available="data.mvalue"
+        :occupied="data.mvalue"
         class="slots-badge"
       />
     </div>
@@ -64,7 +64,7 @@ export default {
     },
 
     totalCapacity() {
-      return this.data.smetadata?.capacity
+      return this.data.smetadata?.capacity || 1
     },
 
     mapCenter() {
@@ -97,7 +97,7 @@ export default {
     }
 
     & .parking-ico {
-      @apply absolute -left-1 -bottom-1;
+      @apply absolute -left-1 -top-2;
     }
 
     & .slots-badge {

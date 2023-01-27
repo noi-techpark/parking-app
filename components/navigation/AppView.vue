@@ -77,6 +77,13 @@
             class="card"
             @click.native="showParkingDetails(parkingCard)"
           />
+
+          <div class="powered-by">
+            <a href="https://opendatahub.com" target="_blank">
+              <p class="label">{{ $t('common.poweredBy') }}</p>
+              <icon name="open-data-hub" class="logo" />
+            </a>
+          </div>
         </div>
       </div>
       <Modal
@@ -98,7 +105,7 @@
 export default {
   data() {
     return {
-      AUTO_FETCH_TIMEOUT: 30000,
+      AUTO_FETCH_TIMEOUT: 60000,
       BAR_EXPANSION_TOGGLE_OFFSET: 150,
       MAP_OPTIONS: {
         streetViewControl: true,
@@ -113,7 +120,8 @@ export default {
       parkingStations: null,
       onStreetParkings: null,
       parkingCards: [],
-      mapData: [],
+      defaultMapData: [],
+      zoomedMapData: [],
       parkingDetailsModal: {
         data: null,
         isVisible: false,
@@ -223,6 +231,10 @@ export default {
       }))
     },
 
+    mapData() {
+      return this.groupStreetParkings ? this.zoomedMapData : this.defaultMapData
+    },
+
     currentLocationData() {
       return this.locations.find(
         (location) => location.id === this.currentLocation
@@ -269,23 +281,41 @@ export default {
     },
 
     constructMapData() {
-      let parkings = []
+      let data = []
+      let zoomedData = []
 
       if (this.parkingStations?.data) {
-        parkings = [
-          ...parkings,
+        data = [
+          ...data,
           ...this.normalizeParkingDataset(this.parkingStations?.data, true),
+        ]
+        zoomedData = [
+          ...zoomedData,
+          ...this.normalizeParkingDataset(
+            this.parkingStations?.data,
+            true,
+            true
+          ),
         ]
       }
 
       if (this.onStreetParkings?.data) {
-        parkings = [
-          ...parkings,
+        data = [
+          ...data,
           ...this.normalizeParkingDataset(this.onStreetParkings?.data, true),
+        ]
+        zoomedData = [
+          ...zoomedData,
+          ...this.normalizeParkingDataset(
+            this.onStreetParkings?.data,
+            true,
+            true
+          ),
         ]
       }
 
-      this.mapData = parkings
+      this.defaultMapData = data
+      this.zoomedMapData = zoomedData
     },
 
     autoFetch(fetch) {
@@ -297,7 +327,7 @@ export default {
     },
 
     checkRoute() {
-      const locationId = this.$route.query.loc
+      const locationId = this.$route.query.location
       if (locationId && this.locations.find((loc) => loc.id === locationId)) {
         this.currentLocation = locationId
       }
@@ -316,7 +346,7 @@ export default {
       this.currentLocation = locationId
       this.$router.replace({
         name: this.$router.name,
-        query: { loc: locationId },
+        query: { location: locationId },
       })
       this.$refs.map.render()
     },
@@ -338,15 +368,25 @@ export default {
       // TODO: add here redirect
     },
 
-    normalizeParkingDataset(dataset, forMapData) {
+    normalizeParkingDataset(dataset, forMapData, groupStreetParkings) {
       const rawData = {}
 
       // Group values by m-period
       const baseId = new Date().getTime()
       dataset.forEach((parking) => {
+        // Exclude unsupported types of forecasts
+        if (
+          parking.tname === 'free' ||
+          parking.tname.startsWith('parking-forecast-low') ||
+          parking.tname.startsWith('parking-forecast-high') ||
+          parking.tname.startsWith('parking-forecast-rmse')
+        ) {
+          return true
+        }
+
         const doGrouping =
           forMapData &&
-          this.groupStreetParkings &&
+          groupStreetParkings &&
           parking.stype === 'ParkingSensor' &&
           typeof parking.smetadata.group !== 'undefined'
 
@@ -386,11 +426,14 @@ export default {
           rawData[parkingId].mperiod = parking.mperiod
           rawData[parkingId].mvalue = Math.round(parking.mvalue)
         }
-
-        rawData[parkingId].forecast.push({
-          mperiod: parking.mperiod,
-          mvalue: Math.round(parking.mvalue),
-        })
+        if (parking.mperiod !== 300 || parking.ttype === 'Instantaneous') {
+          rawData[parkingId].forecast.push({
+            mperiod: parking.mperiod,
+            mvalue:
+              rawData[parkingId].smetadata.capacity -
+              Math.round(parking.mvalue),
+          })
+        }
 
         rawData[parkingId].forecast = rawData[parkingId].forecast.sort(
           (a, b) => a.mperiod - b.mperiod
@@ -523,16 +566,10 @@ export default {
     },
 
     handleZoomUpdate(newZoom) {
-      const oldGroupingPref = this.groupStreetParkings
-
       if (newZoom > 14) {
         this.groupStreetParkings = false
       } else {
         this.groupStreetParkings = true
-      }
-
-      if (oldGroupingPref !== this.groupStreetParkings) {
-        this.$nextTick(() => this.constructMapData(true))
       }
     },
   },
@@ -646,6 +683,20 @@ main {
 
           &:last-child {
             @apply mb-5;
+          }
+        }
+
+        & .powered-by {
+          @apply w-full mt-6 mb-5;
+
+          flex-shrink: 0;
+
+          & .label {
+            @apply text-sm text-black mb-1;
+          }
+
+          & .logo {
+            @apply h-12;
           }
         }
       }

@@ -12,13 +12,14 @@
       :load-tiles-while-animating="true"
       :load-tiles-while-interacting="true"
       data-projection="EPSG:4326"
+      showCenter
       class="map"
       @singleclick="clickedMap"
       @mounted="onMapMounted"
     >
       <vl-view
         :zoom.sync="zoom"
-        :center.sync="center"
+        :center.sync="showCenter"
         :rotation.sync="rotation"
       ></vl-view>
 
@@ -39,14 +40,14 @@
             >
               <ParkingStationIco
                 v-if="location.stype === 'ParkingStation'"
-                :text="String(location.mvalue)"
+                :text="getParkingAvailability(location)"
                 class="parking-station-ico"
                 :color="getParkingIconColor(location)"
                 @click.native="clickedMarker(location)"
               />
               <StreetParkingIco
                 v-if="location.stype === 'ParkingSensor'"
-                :text="String(location.mvalue)"
+                :text="getParkingAvailability(location)"
                 class="street-parking-ico"
                 :color="getParkingIconColor(location)"
                 @click.native="clickedMarker(location)"
@@ -94,11 +95,11 @@ export default {
   data() {
     return {
       DEFAULT_CONFIG: {
-        CENTER: [11.3536166, 46.4981249],
         ROTATION: 0,
       },
       zoom: 14,
       isMounted: false,
+      showCenter: [11.3536166, 46.4981249],
     }
   },
 
@@ -127,7 +128,7 @@ export default {
       this.zoom = this.options.zoom
     }
 
-    if (!this.center) {
+    if (this.center) {
       this.showCenter = this.center
     }
   },
@@ -194,8 +195,8 @@ export default {
     },
 
     getParkingIconColor(parkingData) {
-      const available = parkingData.mvalue
-      const total = parkingData.smetadata?.capacity
+      const total = parkingData.smetadata?.capacity || 1
+      const available = total - parkingData.mvalue
 
       if (available / total >= 0.2 && available / total < 0.5) {
         return 'orange'
@@ -210,6 +211,10 @@ export default {
 
     zoomUpdate(newZoom) {
       this.$emit('zoomUpdate', newZoom)
+    },
+
+    getParkingAvailability(parkingData) {
+      return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
     },
   },
 }

@@ -31,10 +31,7 @@
         </span>
       </p>
 
-      <AvailableSlotsBadge
-        :total="data.smetadata.capacity"
-        :available="data.mvalue"
-      />
+      <AvailableSlotsBadge :total="totalCapacity" :occupied="data.mvalue" />
     </div>
     <div v-if="data.stype === 'ParkingStation'" class="graph-ct">
       <ParkingAvailabilityGraph :forecast="data.forecast" />
@@ -83,6 +80,10 @@ export default {
   computed: {
     mapCenter() {
       return [this.data.scoordinate.x, this.data.scoordinate.y]
+    },
+
+    totalCapacity() {
+      return this.data.smetadata?.capacity || 1
     },
 
     parkingMarker() {
