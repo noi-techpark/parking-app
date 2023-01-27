@@ -1,6 +1,6 @@
 <template>
   <div class="parking-view">
-    <h2 class="title">{{ data.sname }}</h2>
+    <h2 class="title">{{ name }}</h2>
     <div class="map-preview">
       <Map
         :markers="parkingMarker"
@@ -8,13 +8,25 @@
         :options="MAP_OPTIONS"
         map-type="roadmap"
         hide-credits
-        @clickedMarker="showParkingDetails"
       />
     </div>
     <div class="parking-details">
-      <span v-if="data.stype === 'ParkingStation'">
-        <ParkingStationIco text="P" />
-        <p class="parking-type">{{ $t('common.parkingStation') }}</p>
+      <span
+        v-if="
+          data.stype === 'ParkingStation' || data.stype === 'OfflineParking'
+        "
+      >
+        <ParkingStationIco
+          text="P"
+          :color="data.stype === 'OfflineParking' ? 'blue' : undefined"
+        />
+        <p class="parking-type">
+          {{
+            data.stype === 'OfflineParking'
+              ? $t('common.parking')
+              : $t('common.parkingStation')
+          }}
+        </p>
       </span>
       <span v-if="data.stype === 'ParkingSensor'">
         <StreetParkingIco text="P" />
@@ -31,7 +43,14 @@
         </span>
       </p>
 
-      <AvailableSlotsBadge :total="totalCapacity" :occupied="data.mvalue" />
+      <div v-if="data.stype === 'OfflineParking'" class="status-info">
+        {{ $t('common.notRealTime') }}
+      </div>
+      <AvailableSlotsBadge
+        v-else
+        :total="totalCapacity"
+        :occupied="data.mvalue"
+      />
     </div>
     <div v-if="data.stype === 'ParkingStation'" class="graph-ct">
       <ParkingAvailabilityGraph :forecast="data.forecast" />
@@ -78,6 +97,10 @@ export default {
   },
 
   computed: {
+    name() {
+      return this.data.smetadata?.standard_name || this.data.sname
+    },
+
     mapCenter() {
       return [this.data.scoordinate.x, this.data.scoordinate.y]
     },
@@ -129,6 +152,10 @@ export default {
 
     & .total-slots-info {
       @apply flex-grow text-grey text-right;
+    }
+
+    & .status-info {
+      @apply text-grey;
     }
   }
 

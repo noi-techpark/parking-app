@@ -1,6 +1,8 @@
 const AVAILABLE_LANGUAGES = ['en']
 
 export default {
+  ssr: false,
+
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'Bolzano Parking App',

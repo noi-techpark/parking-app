@@ -10,13 +10,18 @@
         hide-controls
         hide-credits
       />
-      <span v-if="data.stype === 'ParkingStation'">
+      <span
+        v-if="
+          data.stype === 'ParkingStation' || data.stype === 'OfflineParking'
+        "
+      >
         <ParkingStationIco text="P" class="parking-ico" />
       </span>
       <span v-if="data.stype === 'ParkingSensor'">
         <StreetParkingIco text="P" class="parking-ico" />
       </span>
       <AvailableSlotsBadge
+        v-if="data.stype !== 'OfflineParking'"
         :total="totalCapacity"
         :occupied="data.mvalue"
         class="slots-badge"

@@ -12,7 +12,7 @@
       :load-tiles-while-animating="true"
       :load-tiles-while-interacting="true"
       data-projection="EPSG:4326"
-      showCenter
+      show-center
       class="map"
       @singleclick="clickedMap"
       @mounted="onMapMounted"
@@ -30,16 +30,19 @@
       <vl-layer-vector v-for="(location, index) in markers" :key="index">
         <vl-feature :id="getLocationId(location.lat, location.lng)">
           <vl-geom-point
-            :coordinates="[location.lng || 0, location.lat || 0]"
+            :coordinates="[location.lng, location.lat]"
           ></vl-geom-point>
-          <vl-style-box>
+          <vl-style>
             <vl-overlay
               :id="getLocationId(location.lat, location.lng) + '-overlay'"
               :position="[location.lng, location.lat]"
               :z-index="2"
             >
               <ParkingStationIco
-                v-if="location.stype === 'ParkingStation'"
+                v-if="
+                  location.stype === 'ParkingStation' ||
+                  location.stype === 'OfflineParking'
+                "
                 :text="getParkingAvailability(location)"
                 class="parking-station-ico"
                 :color="getParkingIconColor(location)"
@@ -60,7 +63,7 @@
               :scale="0.1"
             >
             </vl-style-icon>
-          </vl-style-box>
+          </vl-style>
         </vl-feature>
       </vl-layer-vector>
     </vl-map>
@@ -195,6 +198,10 @@ export default {
     },
 
     getParkingIconColor(parkingData) {
+      if (parkingData.stype === 'OfflineParking') {
+        return 'blue'
+      }
+
       const total = parkingData.smetadata?.capacity || 1
       const available = total - parkingData.mvalue
 
@@ -214,6 +221,10 @@ export default {
     },
 
     getParkingAvailability(parkingData) {
+      if (parkingData.stype === 'OfflineParking') {
+        return 'P'
+      }
+
       return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
     },
   },
