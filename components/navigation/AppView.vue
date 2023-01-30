@@ -56,12 +56,26 @@
         <div ref="locationsGrip" class="grip-ct">
           <div class="grip" />
         </div>
-        <div class="locations-ct">
+        <div class="tabs-ct parking-types">
+          <div
+            v-for="parkingType in parkingTypes"
+            :key="parkingType.id"
+            :class="{
+              tab: true,
+              current: currentParkingType === parkingType.id,
+            }"
+            @click="setCurrentParkingType(parkingType.id)"
+          >
+            <icon :name="parkingType.icon" class="icon" />
+            {{ parkingType.name }}
+          </div>
+        </div>
+        <div class="tabs-ct locations">
           <div
             v-for="location in locations"
             :key="location.id"
             :class="{
-              location: true,
+              tab: true,
               current: currentLocation === location.id,
             }"
             @click="setCurrentLocation(location.id)"
@@ -70,6 +84,10 @@
           </div>
         </div>
         <div class="parking-cards">
+          <p v-if="!loadedData" class="load-info">
+            {{ $t('common.loading') + '...' }}
+          </p>
+
           <ParkingCard
             v-for="parkingCard in visibleParkingCards"
             :key="parkingCard.id"
@@ -77,6 +95,13 @@
             class="card"
             @click.native="showParkingDetails(parkingCard)"
           />
+
+          <div class="powered-by">
+            <a href="https://opendatahub.com" target="_blank">
+              <p class="label">{{ $t('common.poweredBy') }}</p>
+              <icon name="open-data-hub" class="logo" />
+            </a>
+          </div>
         </div>
       </div>
       <Modal
@@ -98,7 +123,7 @@
 export default {
   data() {
     return {
-      AUTO_FETCH_TIMEOUT: 30000,
+      AUTO_FETCH_TIMEOUT: 60000,
       BAR_EXPANSION_TOGGLE_OFFSET: 150,
       MAP_OPTIONS: {
         streetViewControl: true,
@@ -108,12 +133,16 @@ export default {
         maxZoom: 15,
       },
 
+      loadedData: false,
       searchValue: '',
       isSearching: false,
       parkingStations: null,
       onStreetParkings: null,
+      offlineParkings: null,
       parkingCards: [],
-      mapData: [],
+      offlineParkingCards: [],
+      defaultMapData: [],
+      zoomedMapData: [],
       parkingDetailsModal: {
         data: null,
         isVisible: false,
@@ -128,6 +157,7 @@ export default {
         yOffset: 0,
       },
       currentLocation: 'bolzano',
+      currentParkingType: 'live',
       expandedLocationsBar: false,
       groupStreetParkings: true,
     }
@@ -150,14 +180,24 @@ export default {
         this.handleError(error)
       })
 
+    this.offlineParkings = await this.$axios
+      .$get(
+        'https://tourism.opendatahub.bz.it/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000'
+      )
+      .catch((error) => {
+        this.handleError(error)
+      })
+
     this.constructData()
     this.constructMapData()
+
+    this.loadedData = true
   },
 
   computed: {
     locations() {
       return [
-        this.getLocationBlock(
+        this.getTabDataBlock(
           'bolzano',
           this.$t('places.bolzano'),
           {
@@ -166,7 +206,7 @@ export default {
           },
           'Bolzano - Bozen'
         ),
-        this.getLocationBlock(
+        this.getTabDataBlock(
           'merano',
           this.$t('places.merano'),
           {
@@ -175,7 +215,7 @@ export default {
           },
           'Meran - Merano'
         ),
-        this.getLocationBlock(
+        this.getTabDataBlock(
           'rovereto',
           this.$t('places.rovereto'),
           {
@@ -184,7 +224,7 @@ export default {
           },
           'Rovereto'
         ),
-        this.getLocationBlock(
+        this.getTabDataBlock(
           'trento',
           this.$t('places.trento'),
           {
@@ -192,6 +232,25 @@ export default {
             lng: 11.1205407,
           },
           'Trento'
+        ),
+      ]
+    },
+
+    parkingTypes() {
+      return [
+        this.getTabDataBlock(
+          'live',
+          this.$t('common.realTimeParkings'),
+          null,
+          null,
+          'connected'
+        ),
+        this.getTabDataBlock(
+          'all',
+          this.$t('common.allParkings'),
+          null,
+          null,
+          'disconnected'
         ),
       ]
     },
@@ -223,6 +282,18 @@ export default {
       }))
     },
 
+    mapData() {
+      let data = this.groupStreetParkings
+        ? this.zoomedMapData
+        : this.defaultMapData
+
+      if (this.currentParkingType === 'all') {
+        data = [...data, ...this.offlineParkingCards]
+      }
+
+      return data
+    },
+
     currentLocationData() {
       return this.locations.find(
         (location) => location.id === this.currentLocation
@@ -250,6 +321,7 @@ export default {
   methods: {
     constructData() {
       let parkings = []
+      let offlineParkings = []
 
       if (this.parkingStations?.data) {
         parkings = [
@@ -265,27 +337,53 @@ export default {
         ]
       }
 
+      if (this.offlineParkings?.Items) {
+        offlineParkings = [
+          ...offlineParkings,
+          ...this.normalizeOfflineParkingDataset(this.offlineParkings?.Items),
+        ]
+      }
+
       this.parkingCards = parkings
+      this.offlineParkingCards = offlineParkings
     },
 
     constructMapData() {
-      let parkings = []
+      let data = []
+      let zoomedData = []
 
       if (this.parkingStations?.data) {
-        parkings = [
-          ...parkings,
+        data = [
+          ...data,
           ...this.normalizeParkingDataset(this.parkingStations?.data, true),
+        ]
+        zoomedData = [
+          ...zoomedData,
+          ...this.normalizeParkingDataset(
+            this.parkingStations?.data,
+            true,
+            true
+          ),
         ]
       }
 
       if (this.onStreetParkings?.data) {
-        parkings = [
-          ...parkings,
+        data = [
+          ...data,
           ...this.normalizeParkingDataset(this.onStreetParkings?.data, true),
+        ]
+        zoomedData = [
+          ...zoomedData,
+          ...this.normalizeParkingDataset(
+            this.onStreetParkings?.data,
+            true,
+            true
+          ),
         ]
       }
 
-      this.mapData = parkings
+      this.defaultMapData = data
+      this.zoomedMapData = zoomedData
     },
 
     autoFetch(fetch) {
@@ -297,26 +395,31 @@ export default {
     },
 
     checkRoute() {
-      const locationId = this.$route.query.loc
+      const locationId = this.$route.query.location
       if (locationId && this.locations.find((loc) => loc.id === locationId)) {
         this.currentLocation = locationId
       }
     },
 
-    getLocationBlock(id, name, center, municipalityId) {
+    getTabDataBlock(id, name, center, municipalityId, icon) {
       return {
         id,
         name,
         center,
         municipalityId,
+        icon,
       }
+    },
+
+    setCurrentParkingType(parkingType) {
+      this.currentParkingType = parkingType
     },
 
     setCurrentLocation(locationId) {
       this.currentLocation = locationId
       this.$router.replace({
         name: this.$router.name,
-        query: { loc: locationId },
+        query: { location: locationId },
       })
       this.$refs.map.render()
     },
@@ -338,15 +441,25 @@ export default {
       // TODO: add here redirect
     },
 
-    normalizeParkingDataset(dataset, forMapData) {
+    normalizeParkingDataset(dataset, forMapData, groupStreetParkings) {
       const rawData = {}
 
       // Group values by m-period
       const baseId = new Date().getTime()
       dataset.forEach((parking) => {
+        // Exclude unsupported types of forecasts
+        if (
+          parking.tname === 'free' ||
+          parking.tname.startsWith('parking-forecast-low') ||
+          parking.tname.startsWith('parking-forecast-high') ||
+          parking.tname.startsWith('parking-forecast-rmse')
+        ) {
+          return true
+        }
+
         const doGrouping =
           forMapData &&
-          this.groupStreetParkings &&
+          groupStreetParkings &&
           parking.stype === 'ParkingSensor' &&
           typeof parking.smetadata.group !== 'undefined'
 
@@ -386,11 +499,14 @@ export default {
           rawData[parkingId].mperiod = parking.mperiod
           rawData[parkingId].mvalue = Math.round(parking.mvalue)
         }
-
-        rawData[parkingId].forecast.push({
-          mperiod: parking.mperiod,
-          mvalue: Math.round(parking.mvalue),
-        })
+        if (parking.mperiod !== 300 || parking.ttype === 'Instantaneous') {
+          rawData[parkingId].forecast.push({
+            mperiod: parking.mperiod,
+            mvalue:
+              rawData[parkingId].smetadata.capacity -
+              Math.round(parking.mvalue),
+          })
+        }
 
         rawData[parkingId].forecast = rawData[parkingId].forecast.sort(
           (a, b) => a.mperiod - b.mperiod
@@ -398,6 +514,38 @@ export default {
       })
 
       return Object.values(rawData)
+    },
+
+    normalizeOfflineParkingDataset(dataset) {
+      const parkings = []
+
+      dataset.forEach((parking) => {
+        let translatedName = parking.Detail[this.$i18n.locale]?.Title
+        if (!translatedName) {
+          translatedName = parking.Detail.en?.Title
+        }
+
+        const coordinates = parking.GpsInfo[0]
+        if (coordinates) {
+          parkings.push({
+            id: parking.Id,
+            forecast: [],
+            mperiod: null,
+            mvalue: null,
+            stype: 'OfflineParking',
+            sname: translatedName,
+            smetadata: {
+              capacity: null,
+            },
+            scoordinate: {
+              x: coordinates.Longitude,
+              y: coordinates.Latitude,
+            },
+          })
+        }
+      })
+
+      return parkings
     },
 
     bindDragEvents() {
@@ -523,16 +671,10 @@ export default {
     },
 
     handleZoomUpdate(newZoom) {
-      const oldGroupingPref = this.groupStreetParkings
-
       if (newZoom > 14) {
         this.groupStreetParkings = false
       } else {
         this.groupStreetParkings = true
-      }
-
-      if (oldGroupingPref !== this.groupStreetParkings) {
-        this.$nextTick(() => this.constructMapData(true))
       }
     },
   },
@@ -619,14 +761,22 @@ main {
         }
       }
 
-      & .locations-ct {
+      & .tabs-ct {
         @apply sticky top-0 overflow-x-scroll bg-white pt-5 pb-5;
 
         white-space: nowrap;
         z-index: 1;
 
-        & .location {
-          @apply inline-block mr-2 rounded-lg text-base text-black px-3 py-2 bg-placeholder leading-none cursor-pointer;
+        & .tab {
+          @apply inline-block mr-2 rounded-lg text-base text-black px-4 pt-2 bg-placeholder leading-none cursor-pointer select-none;
+
+          padding-bottom: 0.4rem;
+
+          & .icon {
+            @apply w-3 h-3 fill-current align-top;
+
+            margin-right: 2px;
+          }
 
           &:first-child {
             @apply ml-5;
@@ -636,16 +786,42 @@ main {
             @apply bg-primary text-white;
           }
         }
+
+        &.parking-types {
+          @apply pb-2;
+        }
+
+        &.locations {
+          @apply pt-0;
+        }
       }
 
       & .parking-cards {
         @apply mx-5;
+
+        & .load-info {
+          @apply text-grey py-3;
+        }
 
         & .card {
           @apply mb-3;
 
           &:last-child {
             @apply mb-5;
+          }
+        }
+
+        & .powered-by {
+          @apply w-full mt-6 mb-10;
+
+          flex-shrink: 0;
+
+          & .label {
+            @apply text-sm text-black mb-1;
+          }
+
+          & .logo {
+            @apply h-12;
           }
         }
       }
@@ -683,7 +859,7 @@ main {
           z-index: 1;
         }
 
-        & .locations-ct {
+        & .tabs-ct {
           top: 48px;
         }
 

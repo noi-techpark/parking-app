@@ -12,13 +12,14 @@
       :load-tiles-while-animating="true"
       :load-tiles-while-interacting="true"
       data-projection="EPSG:4326"
+      show-center
       class="map"
       @singleclick="clickedMap"
       @mounted="onMapMounted"
     >
       <vl-view
         :zoom.sync="zoom"
-        :center.sync="center"
+        :center.sync="showCenter"
         :rotation.sync="rotation"
       ></vl-view>
 
@@ -29,24 +30,27 @@
       <vl-layer-vector v-for="(location, index) in markers" :key="index">
         <vl-feature :id="getLocationId(location.lat, location.lng)">
           <vl-geom-point
-            :coordinates="[location.lng || 0, location.lat || 0]"
+            :coordinates="[location.lng, location.lat]"
           ></vl-geom-point>
-          <vl-style-box>
+          <vl-style>
             <vl-overlay
               :id="getLocationId(location.lat, location.lng) + '-overlay'"
               :position="[location.lng, location.lat]"
               :z-index="2"
             >
               <ParkingStationIco
-                v-if="location.stype === 'ParkingStation'"
-                :text="String(location.mvalue)"
+                v-if="
+                  location.stype === 'ParkingStation' ||
+                  location.stype === 'OfflineParking'
+                "
+                :text="getParkingAvailability(location)"
                 class="parking-station-ico"
                 :color="getParkingIconColor(location)"
                 @click.native="clickedMarker(location)"
               />
               <StreetParkingIco
                 v-if="location.stype === 'ParkingSensor'"
-                :text="String(location.mvalue)"
+                :text="getParkingAvailability(location)"
                 class="street-parking-ico"
                 :color="getParkingIconColor(location)"
                 @click.native="clickedMarker(location)"
@@ -59,7 +63,7 @@
               :scale="0.1"
             >
             </vl-style-icon>
-          </vl-style-box>
+          </vl-style>
         </vl-feature>
       </vl-layer-vector>
     </vl-map>
@@ -94,11 +98,11 @@ export default {
   data() {
     return {
       DEFAULT_CONFIG: {
-        CENTER: [11.3536166, 46.4981249],
         ROTATION: 0,
       },
       zoom: 14,
       isMounted: false,
+      showCenter: [11.3536166, 46.4981249],
     }
   },
 
@@ -127,7 +131,7 @@ export default {
       this.zoom = this.options.zoom
     }
 
-    if (!this.center) {
+    if (this.center) {
       this.showCenter = this.center
     }
   },
@@ -194,8 +198,12 @@ export default {
     },
 
     getParkingIconColor(parkingData) {
-      const available = parkingData.mvalue
-      const total = parkingData.smetadata?.capacity
+      if (parkingData.stype === 'OfflineParking') {
+        return 'blue'
+      }
+
+      const total = parkingData.smetadata?.capacity || 1
+      const available = total - parkingData.mvalue
 
       if (available / total >= 0.2 && available / total < 0.5) {
         return 'orange'
@@ -210,6 +218,14 @@ export default {
 
     zoomUpdate(newZoom) {
       this.$emit('zoomUpdate', newZoom)
+    },
+
+    getParkingAvailability(parkingData) {
+      if (parkingData.stype === 'OfflineParking') {
+        return 'P'
+      }
+
+      return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
     },
   },
 }

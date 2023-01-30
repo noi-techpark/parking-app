@@ -6,7 +6,7 @@
       red: available === 0 || available / total < 0.2,
     }"
   >
-    <span v-if="total" class="count">
+    <span v-if="total > 1" class="count">
       {{ available }}
     </span>
     <span class="label">
@@ -18,7 +18,7 @@
 <script>
 export default {
   props: {
-    available: {
+    occupied: {
       type: Number,
       required: true,
       default: 0,
@@ -31,8 +31,12 @@ export default {
   },
 
   computed: {
+    available() {
+      return this.total - this.occupied
+    },
+
     label() {
-      if (this.total) {
+      if (this.total > 1) {
         return this.available === 1
           ? this.$t('common.freeSing')
           : this.$t('common.freePlur')

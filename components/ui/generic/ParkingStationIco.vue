@@ -24,7 +24,7 @@ export default {
       type: String,
       default: 'green',
       validator(value) {
-        return ['green', 'orange', 'red'].includes(value)
+        return ['green', 'orange', 'red', 'blue'].includes(value)
       },
     },
   },
@@ -36,7 +36,9 @@ export default {
   @apply flex items-center justify-center w-6 h-6 rounded-full bg-primary-hover select-none;
 
   & .inner {
-    @apply flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-hover text-xs;
+    @apply flex items-center justify-center w-5 h-5 rounded-full bg-primary text-xs;
+
+    color: #76c9e2;
   }
 
   &.green {
