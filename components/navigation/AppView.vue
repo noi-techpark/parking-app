@@ -166,7 +166,7 @@ export default {
   async fetch() {
     this.parkingStations = await this.$axios
       .$get(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=scoordinate,scode,smetadata,sdatatypes,stype'
       )
       .catch((error) => {
         this.handleError(error)
@@ -174,7 +174,7 @@ export default {
 
     this.onStreetParkings = await this.$axios
       .$get(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=sactive.eq.true&select=scoordinate,scode,smetadata,sdatatypes,stype'
       )
       .catch((error) => {
         this.handleError(error)
