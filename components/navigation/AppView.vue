@@ -836,10 +836,10 @@ main {
 @media only screen and (max-width: 980px) {
   main {
     & .controls {
-      @apply w-auto left-0 right-0 h-full;
+      @apply w-auto left-0 right-0 h-full pointer-events-none;
 
       & .search-bar {
-        @apply mx-5;
+        @apply mx-5 pointer-events-auto;
 
         & .search-results {
           max-height: initial;
@@ -847,7 +847,7 @@ main {
       }
 
       & .locations-bar {
-        @apply absolute bottom-0 w-full pt-0 transition;
+        @apply absolute bottom-0 w-full pt-0 transition pointer-events-auto;
 
         max-height: initial;
         height: calc(100vh - 250px);
