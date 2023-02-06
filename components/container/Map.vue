@@ -122,18 +122,6 @@ export default {
     },
 
     visibleMarkers() {
-      console.log(
-        'PASSED',
-        this.markers.filter(
-          (marker) =>
-            this.calcCrow(
-              marker.lat,
-              marker.lng,
-              this.curCenter[1],
-              this.curCenter[0]
-            ) < this.zoomToKmViewArea
-        )
-      )
       return this.markers.length > 1
         ? this.markers.filter(
             (marker) =>
@@ -225,7 +213,6 @@ export default {
 
   methods: {
     calcCrow(lat1, lon1, lat2, lon2) {
-      console.log('CALC', lat1, lon1, lat2, lon2)
       const R = 6371
       const dLat = this.toRad(lat2 - lat1)
       const dLon = this.toRad(lon2 - lon1)
