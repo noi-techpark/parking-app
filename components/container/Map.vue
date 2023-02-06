@@ -28,8 +28,14 @@
       </vl-layer-tile>
 
       <vl-layer-vector-image
-        v-for="(location, index) in visibleMarkers"
-        :key="index"
+        v-for="location in visibleMarkers"
+        :key="
+          getLocationId(location.lat, location.lng) +
+          '-' +
+          zoom +
+          '-' +
+          refreshLoop
+        "
       >
         <vl-feature :id="getLocationId(location.lat, location.lng)">
           <vl-geom-point
@@ -37,13 +43,7 @@
           ></vl-geom-point>
           <vl-style>
             <vl-overlay
-              :id="
-                getLocationId(location.lat, location.lng) +
-                '-overlay-' +
-                zoom +
-                '-' +
-                refreshLoop
-              "
+              :id="getLocationId(location.lat, location.lng) + '-overlay'"
               :position="[location.lng, location.lat]"
               :z-index="2"
             >
@@ -122,6 +122,18 @@ export default {
     },
 
     visibleMarkers() {
+      console.log(
+        'PASSED',
+        this.markers.filter(
+          (marker) =>
+            this.calcCrow(
+              marker.lat,
+              marker.lng,
+              this.curCenter[1],
+              this.curCenter[0]
+            ) < this.zoomToKmViewArea
+        )
+      )
       return this.markers.length > 1
         ? this.markers.filter(
             (marker) =>
@@ -213,6 +225,7 @@ export default {
 
   methods: {
     calcCrow(lat1, lon1, lat2, lon2) {
+      console.log('CALC', lat1, lon1, lat2, lon2)
       const R = 6371
       const dLat = this.toRad(lat2 - lat1)
       const dLon = this.toRad(lon2 - lon1)
