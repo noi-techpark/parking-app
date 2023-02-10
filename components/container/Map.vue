@@ -78,7 +78,7 @@
 
       <vl-layer-vector>
         <vl-source-vector :features="features"></vl-source-vector>
-        <!-- <vl-style-func :function.sync="pointsStyleFunc" /> -->
+        <!-- <vl-style-func :function="this.pointsStyleFunc" /> -->
       </vl-layer-vector>
     </vl-map>
   </div>
@@ -123,7 +123,7 @@ export default {
 
   computed: {
     features(){
-      return this.points
+      return Object.freeze(this.points)
     },
     rotation() {
       return this.DEFAULT_CONFIG.ROTATION
@@ -188,7 +188,6 @@ export default {
     //   } else if (this.zoom >= 1) {
     //     return DEGREE_TO_KM * 360 + TOLERANCE
     //   }
-
     //   return TOLERANCE
     // },
   },
@@ -206,8 +205,6 @@ export default {
   },
 
   mounted() {
-    // this.features = this.points;
-    // console.log(this.features.length);
     this.isMounted = true;
   },
 
@@ -227,6 +224,7 @@ export default {
       // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
       return (feature) => {
         console.log(feature);
+        console.log("stylezzz");
         const baseStyle = new this.ol.style.Style({
           image: new this.ol.style.Circle({
             radius: 30,
@@ -287,6 +285,7 @@ export default {
       )
 
       if (!feature) {
+        console.log("onclick: no feature found");
         return
       }
 
@@ -294,6 +293,7 @@ export default {
         const item = this.points.find(
           (marker) => this.getLocationId(marker.lat, marker.lng) === result.id_
         )
+        console.log("item", item);
 
         if (item) {
           this.clickedMarker(item)

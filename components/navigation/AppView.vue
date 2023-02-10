@@ -281,7 +281,7 @@ export default {
         parkingData: card,
         // GeoJSON props
         type: 'Feature',
-        id: card.scoordinate?.x + '-' + card.scoordinate?.y,
+        id: card.scoordinate?.y + '-' + card.scoordinate?.x,
         geometry: {
           type: 'Point',
           coordinates: [card.scoordinate?.x, card.scoordinate?.y],
