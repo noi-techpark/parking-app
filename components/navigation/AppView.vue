@@ -3,7 +3,7 @@
     <div class="map-ct-up">
       <Map
         ref="map"
-        :markers="mapMarkers"
+        :points="mapMarkers"
         :center="mapCenter"
         :options="MAP_OPTIONS"
         map-type="roadmap"
@@ -279,6 +279,19 @@ export default {
         lat: card.scoordinate?.y,
         lng: card.scoordinate?.x,
         parkingData: card,
+        // GeoJSON props
+        type: 'Feature',
+        id: card.scoordinate?.x + '-' + card.scoordinate?.y,
+        geometry: {
+          type: 'Point',
+          coordinates: [card.scoordinate?.x, card.scoordinate?.y],
+        },
+        properties: {
+          name: 'nam',
+          country: 'name',
+          address: 'test',
+          color: 'blue',
+        },
       }))
     },
 

@@ -27,8 +27,8 @@
         <vl-source-osm></vl-source-osm>
       </vl-layer-tile>
 
-      <vl-layer-vector-image
-        v-for="location in visibleMarkers"
+      <!-- <vl-layer-vector-image
+        v-for="location in this.markers"
         :key="
           getLocationId(location.lat, location.lng) +
           '-' +
@@ -74,7 +74,12 @@
             </vl-style-icon>
           </vl-style>
         </vl-feature>
-      </vl-layer-vector-image>
+      </vl-layer-vector-image> -->
+
+      <vl-layer-vector>
+        <vl-source-vector :features="features"></vl-source-vector>
+        <!-- <vl-style-func :function.sync="pointsStyleFunc" /> -->
+      </vl-layer-vector>
     </vl-map>
   </div>
 </template>
@@ -86,7 +91,7 @@ export default {
       type: Object,
       default: () => {},
     },
-    markers: {
+    points: {
       type: Array,
       default: () => [],
     },
@@ -117,72 +122,75 @@ export default {
   },
 
   computed: {
+    features(){
+      return this.points
+    },
     rotation() {
       return this.DEFAULT_CONFIG.ROTATION
     },
 
-    visibleMarkers() {
-      return this.markers.length > 1
-        ? this.markers.filter(
-            (marker) =>
-              this.calcCrow(
-                marker.lat,
-                marker.lng,
-                this.curCenter[1],
-                this.curCenter[0]
-              ) < this.zoomToKmViewArea
-          )
-        : this.markers
-    },
+    // visibleMarkers() {
+    //   return this.markers.length > 1
+    //     ? this.markers.filter(
+    //         (marker) =>
+    //           this.calcCrow(
+    //             marker.lat,
+    //             marker.lng,
+    //             this.curCenter[1],
+    //             this.curCenter[0]
+    //           ) < this.zoomToKmViewArea
+    //       )
+    //     : this.markers
+    // },
 
-    zoomToKmViewArea() {
-      const DEGREE_TO_KM = 110.574
-      const TOLERANCE = 0.3
+    // zoomToKmViewArea() {
+    //   const DEGREE_TO_KM = 110.574
+    //   const TOLERANCE = 0.3
 
-      if (this.zoom >= 20) {
-        return DEGREE_TO_KM * 0.00025 + TOLERANCE
-      } else if (this.zoom >= 19) {
-        return DEGREE_TO_KM * 0.0005 + TOLERANCE
-      } else if (this.zoom >= 18) {
-        return DEGREE_TO_KM * 0.001 + TOLERANCE
-      } else if (this.zoom >= 17) {
-        return DEGREE_TO_KM * 0.003 + TOLERANCE
-      } else if (this.zoom >= 16) {
-        return DEGREE_TO_KM * 0.005 + TOLERANCE
-      } else if (this.zoom >= 15) {
-        return DEGREE_TO_KM * 0.011 + TOLERANCE
-      } else if (this.zoom >= 14) {
-        return DEGREE_TO_KM * 0.022 + TOLERANCE
-      } else if (this.zoom >= 13) {
-        return DEGREE_TO_KM * 0.044 + TOLERANCE
-      } else if (this.zoom >= 12) {
-        return DEGREE_TO_KM * 0.176 + TOLERANCE
-      } else if (this.zoom >= 11) {
-        return DEGREE_TO_KM * 0.352 + TOLERANCE
-      } else if (this.zoom >= 10) {
-        return DEGREE_TO_KM * 0.703 + TOLERANCE
-      } else if (this.zoom >= 9) {
-        return DEGREE_TO_KM * 1.406 + TOLERANCE
-      } else if (this.zoom >= 8) {
-        return DEGREE_TO_KM * 2.813 + TOLERANCE
-      } else if (this.zoom >= 7) {
-        return DEGREE_TO_KM * 5.625 + TOLERANCE
-      } else if (this.zoom >= 6) {
-        return DEGREE_TO_KM * 11.25 + TOLERANCE
-      } else if (this.zoom >= 5) {
-        return DEGREE_TO_KM * 22.5 + TOLERANCE
-      } else if (this.zoom >= 4) {
-        return DEGREE_TO_KM * 45 + TOLERANCE
-      } else if (this.zoom >= 3) {
-        return DEGREE_TO_KM * 90 + TOLERANCE
-      } else if (this.zoom >= 2) {
-        return DEGREE_TO_KM * 180 + TOLERANCE
-      } else if (this.zoom >= 1) {
-        return DEGREE_TO_KM * 360 + TOLERANCE
-      }
+    //   if (this.zoom >= 20) {
+    //     return DEGREE_TO_KM * 0.00025 + TOLERANCE
+    //   } else if (this.zoom >= 19) {
+    //     return DEGREE_TO_KM * 0.0005 + TOLERANCE
+    //   } else if (this.zoom >= 18) {
+    //     return DEGREE_TO_KM * 0.001 + TOLERANCE
+    //   } else if (this.zoom >= 17) {
+    //     return DEGREE_TO_KM * 0.003 + TOLERANCE
+    //   } else if (this.zoom >= 16) {
+    //     return DEGREE_TO_KM * 0.005 + TOLERANCE
+    //   } else if (this.zoom >= 15) {
+    //     return DEGREE_TO_KM * 0.011 + TOLERANCE
+    //   } else if (this.zoom >= 14) {
+    //     return DEGREE_TO_KM * 0.022 + TOLERANCE
+    //   } else if (this.zoom >= 13) {
+    //     return DEGREE_TO_KM * 0.044 + TOLERANCE
+    //   } else if (this.zoom >= 12) {
+    //     return DEGREE_TO_KM * 0.176 + TOLERANCE
+    //   } else if (this.zoom >= 11) {
+    //     return DEGREE_TO_KM * 0.352 + TOLERANCE
+    //   } else if (this.zoom >= 10) {
+    //     return DEGREE_TO_KM * 0.703 + TOLERANCE
+    //   } else if (this.zoom >= 9) {
+    //     return DEGREE_TO_KM * 1.406 + TOLERANCE
+    //   } else if (this.zoom >= 8) {
+    //     return DEGREE_TO_KM * 2.813 + TOLERANCE
+    //   } else if (this.zoom >= 7) {
+    //     return DEGREE_TO_KM * 5.625 + TOLERANCE
+    //   } else if (this.zoom >= 6) {
+    //     return DEGREE_TO_KM * 11.25 + TOLERANCE
+    //   } else if (this.zoom >= 5) {
+    //     return DEGREE_TO_KM * 22.5 + TOLERANCE
+    //   } else if (this.zoom >= 4) {
+    //     return DEGREE_TO_KM * 45 + TOLERANCE
+    //   } else if (this.zoom >= 3) {
+    //     return DEGREE_TO_KM * 90 + TOLERANCE
+    //   } else if (this.zoom >= 2) {
+    //     return DEGREE_TO_KM * 180 + TOLERANCE
+    //   } else if (this.zoom >= 1) {
+    //     return DEGREE_TO_KM * 360 + TOLERANCE
+    //   }
 
-      return TOLERANCE
-    },
+    //   return TOLERANCE
+    // },
   },
 
   watch: {
@@ -198,7 +206,9 @@ export default {
   },
 
   mounted() {
-    this.isMounted = true
+    // this.features = this.points;
+    // console.log(this.features.length);
+    this.isMounted = true;
   },
 
   created() {
@@ -212,6 +222,23 @@ export default {
   },
 
   methods: {
+    pointsStyleFunc() {
+      // style function and styles using OpenLayers API
+      // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
+      return (feature) => {
+        console.log(feature);
+        const baseStyle = new this.ol.style.Style({
+          image: new this.ol.style.Circle({
+            radius: 30,
+            color: 'red',
+            stroke: new this.ol.style.Stroke({
+              color: 'red',
+            }),
+          }),
+        })
+        return [baseStyle]
+      }
+    },
     calcCrow(lat1, lon1, lat2, lon2) {
       const R = 6371
       const dLat = this.toRad(lat2 - lat1)
@@ -264,7 +291,7 @@ export default {
       }
 
       feature.then((result) => {
-        const item = this.markers.find(
+        const item = this.points.find(
           (marker) => this.getLocationId(marker.lat, marker.lng) === result.id_
         )
 
