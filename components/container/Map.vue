@@ -78,7 +78,7 @@
 
       <vl-layer-vector>
         <vl-source-vector :features="features"></vl-source-vector>
-        <!-- <vl-style-func :function="this.pointsStyleFunc" /> -->
+        <vl-style-func :factory="this.markerStyleFunc" />
       </vl-layer-vector>
     </vl-map>
   </div>
@@ -219,18 +219,16 @@ export default {
   },
 
   methods: {
-    pointsStyleFunc() {
+    markerStyleFunc() {
       // style function and styles using OpenLayers API
       // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
       return (feature) => {
-        console.log(feature);
-        console.log("stylezzz");
-        const baseStyle = new this.ol.style.Style({
-          image: new this.ol.style.Circle({
-            radius: 30,
+        const baseStyle = new this.$ol.Style({
+          image: new this.$ol.Circle({
+            radius: 10,
             color: 'red',
-            stroke: new this.ol.style.Stroke({
-              color: 'red',
+            stroke: new this.$ol.Stroke({
+              color: 'green',
             }),
           }),
         })
