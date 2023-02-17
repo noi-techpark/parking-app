@@ -356,7 +356,7 @@ export default {
       if (parkingData.stype === 'OfflineParking') {
         return 'P'
       }
-      return parkingData.mvalue === undefined ? '' : '' + parkingData.mvalue
+      return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
     },
     constructData() {
       let parkings = []
