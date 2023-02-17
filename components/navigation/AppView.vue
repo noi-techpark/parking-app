@@ -287,10 +287,9 @@ export default {
           coordinates: [card.scoordinate?.x, card.scoordinate?.y],
         },
         properties: {
-          name: 'nam',
-          country: 'name',
-          address: 'test',
-          color: 'blue',
+          text: this.getParkingIconText(card),
+          color: this.getParkingIconColor(card),
+          stype: card.stype,
         },
       }))
     },
@@ -332,6 +331,33 @@ export default {
   },
 
   methods: {
+    getParkingIconColor(parkingData) {
+      if (parkingData.stype === 'OfflineParking') {
+        // blue
+        return '#76c9e2'
+      }
+
+      const total = parkingData.smetadata?.capacity || 1
+      const available = total - parkingData.mvalue
+
+      if (available / total >= 0.2 && available / total < 0.5) {
+        // orange
+        return '#e2cd77'
+      }
+
+      if (available === 0 || available / total < 0.2) {
+        // red
+        return '#e28377'
+      }
+      // green
+      return '#8be277'
+    },
+    getParkingIconText(parkingData) {
+      if (parkingData.stype === 'OfflineParking') {
+        return 'P'
+      }
+      return parkingData.mvalue === undefined ? '' : '' + parkingData.mvalue
+    },
     constructData() {
       let parkings = []
       let offlineParkings = []

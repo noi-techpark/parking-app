@@ -26,56 +26,6 @@
       <vl-layer-tile id="osm">
         <vl-source-osm></vl-source-osm>
       </vl-layer-tile>
-
-      <!-- <vl-layer-vector-image
-        v-for="location in this.markers"
-        :key="
-          getLocationId(location.lat, location.lng) +
-          '-' +
-          zoom +
-          '-' +
-          refreshLoop
-        "
-      >
-        <vl-feature :id="getLocationId(location.lat, location.lng)">
-          <vl-geom-point
-            :coordinates="[location.lng, location.lat]"
-          ></vl-geom-point>
-          <vl-style>
-            <vl-overlay
-              :id="getLocationId(location.lat, location.lng) + '-overlay'"
-              :position="[location.lng, location.lat]"
-              :z-index="2"
-            >
-              <ParkingStationIco
-                v-if="
-                  location.stype === 'ParkingStation' ||
-                  location.stype === 'OfflineParking'
-                "
-                :text="getParkingAvailability(location)"
-                class="parking-station-ico"
-                :color="getParkingIconColor(location)"
-                @click.native="clickedMarker(location)"
-              />
-              <StreetParkingIco
-                v-if="location.stype === 'ParkingSensor'"
-                :text="getParkingAvailability(location)"
-                class="street-parking-ico"
-                :color="getParkingIconColor(location)"
-                @click.native="clickedMarker(location)"
-              />
-            </vl-overlay>
-            <vl-style-icon
-              v-if="!location.stype"
-              src="/image/marker.png"
-              :anchor="[0.5, 1]"
-              :scale="0.1"
-            >
-            </vl-style-icon>
-          </vl-style>
-        </vl-feature>
-      </vl-layer-vector-image> -->
-
       <vl-layer-vector>
         <vl-source-vector :features="features"></vl-source-vector>
         <vl-style-func :factory="this.markerStyleFunc" />
@@ -122,7 +72,7 @@ export default {
   },
 
   computed: {
-    features(){
+    features() {
       return Object.freeze(this.points)
     },
     rotation() {
@@ -205,7 +155,7 @@ export default {
   },
 
   mounted() {
-    this.isMounted = true;
+    this.isMounted = true
   },
 
   created() {
@@ -223,13 +173,29 @@ export default {
       // style function and styles using OpenLayers API
       // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
       return (feature) => {
+        // console.log(feature.values_.stype)
         const baseStyle = new this.$ol.Style({
-          image: new this.$ol.Circle({
-            radius: 10,
-            color: 'red',
-            stroke: new this.$ol.Stroke({
-              color: 'green',
-            }),
+          image:
+            feature.values_.stype === 'ParkingSensor'
+              ? new this.$ol.RegularShape({
+                  points: 4,
+                  radius: 25 / Math.SQRT2,
+                  radius2: 25,
+                  angle: 0,
+                  scale: [1, 0.5],
+                  fill: new this.$ol.Fill({
+                    color: feature.values_.color,
+                  }),
+                })
+              : new this.$ol.Circle({
+                  radius: 12,
+                  fill: new this.$ol.Fill({
+                    color: feature.values_.color,
+                  }),
+                }),
+          text: new this.$ol.Text({
+            text: feature.values_.text,
+            textAlign: 'center',
           }),
         })
         return [baseStyle]
@@ -283,7 +249,7 @@ export default {
       )
 
       if (!feature) {
-        console.log("onclick: no feature found");
+        console.log('onclick: no feature found')
         return
       }
 
@@ -291,7 +257,7 @@ export default {
         const item = this.points.find(
           (marker) => this.getLocationId(marker.lat, marker.lng) === result.id_
         )
-        console.log("item", item);
+        console.log('item', item)
 
         if (item) {
           this.clickedMarker(item)
