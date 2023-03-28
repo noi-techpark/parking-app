@@ -1,4 +1,4 @@
-const AVAILABLE_LANGUAGES = ['en']
+import i18nOptions from './plugins/i18n.options'
 
 export default {
   ssr: false,
@@ -19,16 +19,12 @@ export default {
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
-  css: ['@/assets/css/main.css', '@/assets/css/animations.css'],
+  css: [],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
     { src: '@/plugins/vue-notification', ssr: false },
     '@/plugins/notify',
-    {
-      src: '@/plugins/vuelayers.js',
-      ssr: false,
-    },
     '~/plugins/errors.js',
   ],
 
@@ -46,23 +42,23 @@ export default {
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
-  modules: ['nuxt-i18n', '@nuxtjs/axios', '~/shared/vuelayers'],
+  modules: ['nuxt-i18n', '@nuxtjs/axios', 'nuxt-custom-elements'],
 
-  i18n: {
-    locales: AVAILABLE_LANGUAGES,
-    strategy: 'prefix_except_default',
-    defaultLocale: 'en',
-    vueI18n: {
-      fallbackLocale: 'en',
-      messages: AVAILABLE_LANGUAGES.reduce(
-        (obj, key) => ({
-          ...obj,
-          [key]: require('./locales/' + key + '.json'),
-        }),
-        {}
-      ),
-    },
+  customElements: {
+    entries: [
+      {
+        name: 'Bolzano Parking App',
+        tags: [
+          {
+            name: 'BolzanoParkingApp',
+            path: '@/components/navigation/AppView',
+          },
+        ],
+      },
+    ],
   },
+
+  i18n: i18nOptions,
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
@@ -88,6 +84,20 @@ export default {
               svgo: {
                 plugins: [{ removeViewBox: false }],
               },
+            },
+          },
+        ],
+      })
+
+      config.module.rules.push({
+        test: /\.(png|jpe?g|gif|svg|webp|avif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              esModule: false,
+              limit: 1000, // 1kB
+              name: '[name].[ext]',
             },
           },
         ],

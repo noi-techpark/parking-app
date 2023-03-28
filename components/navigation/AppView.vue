@@ -120,12 +120,19 @@
 </template>
 
 <script>
+import vueI18n from '@/plugins/vueI18n'
+import 'tailwindcss/tailwind.css'
+import '@/assets/css/animations.css'
+import '@/assets/css/main.css'
+
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '@/tailwind.config.js'
 
 const fullTailwindConfig = resolveConfig(tailwindConfig)
 
 export default {
+  i18n: vueI18n,
+
   data() {
     return {
       AUTO_FETCH_TIMEOUT: 60000,
@@ -166,37 +173,6 @@ export default {
       expandedLocationsBar: false,
       groupStreetParkings: true,
     }
-  },
-
-  async fetch() {
-    this.parkingStations = await this.$axios
-      .$get(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=scoordinate,scode,smetadata,sdatatypes,stype'
-      )
-      .catch((error) => {
-        this.handleError(error)
-      })
-
-    this.onStreetParkings = await this.$axios
-      .$get(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=sactive.eq.true&select=scoordinate,scode,smetadata,sdatatypes,stype'
-      )
-      .catch((error) => {
-        this.handleError(error)
-      })
-
-    this.offlineParkings = await this.$axios
-      .$get(
-        'https://tourism.opendatahub.bz.it/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000'
-      )
-      .catch((error) => {
-        this.handleError(error)
-      })
-
-    this.constructData()
-    this.constructMapData()
-
-    this.loadedData = true
   },
 
   computed: {
@@ -334,6 +310,10 @@ export default {
     },
   },
 
+  created() {
+    this.fetchData()
+  },
+
   mounted() {
     this.autoFetch(false)
     this.bindDragEvents()
@@ -341,6 +321,34 @@ export default {
   },
 
   methods: {
+    async fetchData() {
+      const parkingStations = await fetch(
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=scoordinate,scode,smetadata,sdatatypes,stype'
+      ).catch((error) => {
+        this.handleError(error)
+      })
+      this.parkingStations = await parkingStations.json()
+
+      const onStreetParkings = await fetch(
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=sactive.eq.true&select=scoordinate,scode,smetadata,sdatatypes,stype'
+      ).catch((error) => {
+        this.handleError(error)
+      })
+      this.onStreetParkings = await onStreetParkings.json()
+
+      const offlineParkings = await fetch(
+        'https://tourism.opendatahub.bz.it/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000'
+      ).catch((error) => {
+        this.handleError(error)
+      })
+      this.offlineParkings = await offlineParkings.json()
+
+      this.constructData()
+      this.constructMapData()
+
+      this.loadedData = true
+    },
+
     getParkingIconColors(parkingData) {
       let color = fullTailwindConfig.theme.colors.green
       let borderColor = fullTailwindConfig.theme.colors['green-hover']
@@ -450,14 +458,14 @@ export default {
 
     autoFetch(fetch) {
       if (fetch) {
-        this.$fetch()
+        this.fetchData()
       }
 
       setTimeout(() => this.autoFetch(true), this.AUTO_FETCH_TIMEOUT)
     },
 
     checkRoute() {
-      const locationId = this.$route.query.location
+      const locationId = this.$route?.query?.location
       if (locationId && this.locations.find((loc) => loc.id === locationId)) {
         this.currentLocation = locationId
       }
@@ -479,10 +487,12 @@ export default {
 
     setCurrentLocation(locationId) {
       this.currentLocation = locationId
-      this.$router.replace({
-        name: this.$router.name,
-        query: { location: locationId },
-      })
+      if (this.$router) {
+        this.$router.replace({
+          name: this.$router.name,
+          query: { location: locationId },
+        })
+      }
       this.$refs.map.render()
     },
 

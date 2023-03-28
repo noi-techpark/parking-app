@@ -35,12 +35,22 @@
 </template>
 
 <script>
+import Vue from 'vue'
+import VueLayers from 'vuelayers'
+import 'vuelayers/dist/vuelayers.css'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfig from '@/tailwind.config.js'
+import Style from 'ol/style/Style'
+import RegularShape from 'ol/style/RegularShape'
+import Circle from 'ol/style/Circle'
+import Fill from 'ol/style/Fill'
+import Stroke from 'ol/style/Stroke'
+import Text from 'ol/style/Text'
 
 import utils from '~/mixins/utils'
 
 const fullTailwindConfig = resolveConfig(tailwindConfig)
+Vue.use(VueLayers)
 
 export default {
   mixins: [utils],
@@ -120,40 +130,40 @@ export default {
       // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
       return (feature) => {
         this.curFeatureIndex++
-        const baseStyle = new this.$ol.Style({
+        const baseStyle = new Style({
           image:
             feature.values_?.stype === 'ParkingSensor'
-              ? new this.$ol.RegularShape({
+              ? new RegularShape({
                   points: 4,
                   radius: 25 / Math.SQRT2,
                   radius2: 25,
                   angle: 0,
                   scale: [1, 0.5],
-                  fill: new this.$ol.Fill({
+                  fill: new Fill({
                     color: feature.values_.color,
                   }),
-                  stroke: new this.$ol.Stroke({
+                  stroke: new Stroke({
                     color: feature.values_.borderColor,
                     width: 2,
                   }),
                 })
-              : new this.$ol.Circle({
+              : new Circle({
                   radius: feature.values_?.stype ? 12 : 4,
-                  fill: new this.$ol.Fill({
+                  fill: new Fill({
                     color:
                       feature.values_?.color ||
                       fullTailwindConfig.theme.colors['primary-hover'],
                   }),
-                  stroke: new this.$ol.Stroke({
+                  stroke: new Stroke({
                     color:
                       feature.values_?.borderColor ||
                       fullTailwindConfig.theme.colors.primary,
                     width: 2,
                   }),
                 }),
-          text: new this.$ol.Text({
+          text: new Text({
             text: feature.values_?.text || '',
-            fill: new this.$ol.Fill({
+            fill: new Fill({
               color:
                 feature.values_?.textColor ||
                 fullTailwindConfig.theme.colors['primary-text'],
