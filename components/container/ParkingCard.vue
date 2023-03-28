@@ -2,7 +2,7 @@
   <div class="parking-card">
     <div class="map-ct">
       <Map
-        :markers="parkingMarker"
+        :points="parkingMarker"
         :center="mapCenter"
         :options="MAP_OPTIONS"
         map-type="roadmap"
@@ -44,7 +44,11 @@
 </template>
 
 <script>
+import utils from '~/mixins/utils'
+
 export default {
+  mixins: [utils],
+
   props: {
     data: {
       type: Object,
@@ -77,12 +81,7 @@ export default {
     },
 
     parkingMarker() {
-      return [
-        {
-          lat: this.data.scoordinate?.y || 0,
-          lng: this.data.scoordinate?.x || 0,
-        },
-      ]
+      return [this.getSimpleMapLocationPointDataBlock(this.data.scoordinate)]
     },
   },
 }

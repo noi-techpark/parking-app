@@ -120,6 +120,11 @@
 </template>
 
 <script>
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '@/tailwind.config.js'
+
+const fullTailwindConfig = resolveConfig(tailwindConfig)
+
 export default {
   data() {
     return {
@@ -270,28 +275,33 @@ export default {
     },
 
     mapMarkers() {
-      return this.mapData.map((card) => ({
-        stype: card.stype,
-        mvalue: card.mvalue,
-        smetadata: {
-          capacity: card.smetadata?.capacity,
-        },
-        lat: card.scoordinate?.y,
-        lng: card.scoordinate?.x,
-        parkingData: card,
-        // GeoJSON props
-        type: 'Feature',
-        id: card.scoordinate?.y + '-' + card.scoordinate?.x,
-        geometry: {
-          type: 'Point',
-          coordinates: [card.scoordinate?.x, card.scoordinate?.y],
-        },
-        properties: {
-          text: this.getParkingIconText(card),
-          color: this.getParkingIconColor(card),
+      return this.mapData.map((card) => {
+        const style = this.getParkingIconColors(card)
+        return {
           stype: card.stype,
-        },
-      }))
+          mvalue: card.mvalue,
+          smetadata: {
+            capacity: card.smetadata?.capacity,
+          },
+          lat: card.scoordinate?.y,
+          lng: card.scoordinate?.x,
+          parkingData: card,
+          // GeoJSON props
+          type: 'Feature',
+          id: card.scoordinate?.y + '-' + card.scoordinate?.x,
+          geometry: {
+            type: 'Point',
+            coordinates: [card.scoordinate?.x, card.scoordinate?.y],
+          },
+          properties: {
+            text: this.getParkingIconText(card),
+            color: style.color,
+            borderColor: style.borderColor,
+            textColor: style.textColor,
+            stype: card.stype,
+          },
+        }
+      })
     },
 
     mapData() {
@@ -331,33 +341,46 @@ export default {
   },
 
   methods: {
-    getParkingIconColor(parkingData) {
+    getParkingIconColors(parkingData) {
+      let color = fullTailwindConfig.theme.colors.green
+      let borderColor = fullTailwindConfig.theme.colors['green-hover']
+      let textColor = fullTailwindConfig.theme.colors['dark-green']
+
       if (parkingData.stype === 'OfflineParking') {
-        // blue
-        return '#76c9e2'
+        color = fullTailwindConfig.theme.colors.primary
+        borderColor = fullTailwindConfig.theme.colors['primary-hover']
+        textColor = fullTailwindConfig.theme.colors['primary-text']
       }
 
       const total = parkingData.smetadata?.capacity || 1
       const available = total - parkingData.mvalue
 
       if (available / total >= 0.2 && available / total < 0.5) {
-        // orange
-        return '#e2cd77'
+        color = fullTailwindConfig.theme.colors.orange
+        borderColor = fullTailwindConfig.theme.colors['orange-hover']
+        textColor = fullTailwindConfig.theme.colors['dark-orange']
       }
 
       if (available === 0 || available / total < 0.2) {
-        // red
-        return '#e28377'
+        color = fullTailwindConfig.theme.colors.red
+        borderColor = fullTailwindConfig.theme.colors['red-hover']
+        textColor = fullTailwindConfig.theme.colors['dark-red']
       }
-      // green
-      return '#8be277'
+
+      return {
+        color,
+        borderColor,
+        textColor,
+      }
     },
+
     getParkingIconText(parkingData) {
       if (parkingData.stype === 'OfflineParking') {
         return 'P'
       }
       return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
     },
+
     constructData() {
       let parkings = []
       let offlineParkings = []

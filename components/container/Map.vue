@@ -28,14 +28,23 @@
       </vl-layer-tile>
       <vl-layer-vector>
         <vl-source-vector :features="features"></vl-source-vector>
-        <vl-style-func :factory="this.markerStyleFunc" />
+        <vl-style-func :factory="markerStyleFunc" />
       </vl-layer-vector>
     </vl-map>
   </div>
 </template>
 
 <script>
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '@/tailwind.config.js'
+
+import utils from '~/mixins/utils'
+
+const fullTailwindConfig = resolveConfig(tailwindConfig)
+
 export default {
+  mixins: [utils],
+
   props: {
     options: {
       type: Object,
@@ -67,7 +76,7 @@ export default {
       zoom: 14,
       isMounted: false,
       curCenter: [11.3536166, 46.4981249],
-      refreshLoop: 0,
+      curFeatureIndex: 0,
     }
   },
 
@@ -75,81 +84,18 @@ export default {
     features() {
       return Object.freeze(this.points)
     },
+
     rotation() {
       return this.DEFAULT_CONFIG.ROTATION
     },
-
-    // visibleMarkers() {
-    //   return this.markers.length > 1
-    //     ? this.markers.filter(
-    //         (marker) =>
-    //           this.calcCrow(
-    //             marker.lat,
-    //             marker.lng,
-    //             this.curCenter[1],
-    //             this.curCenter[0]
-    //           ) < this.zoomToKmViewArea
-    //       )
-    //     : this.markers
-    // },
-
-    // zoomToKmViewArea() {
-    //   const DEGREE_TO_KM = 110.574
-    //   const TOLERANCE = 0.3
-
-    //   if (this.zoom >= 20) {
-    //     return DEGREE_TO_KM * 0.00025 + TOLERANCE
-    //   } else if (this.zoom >= 19) {
-    //     return DEGREE_TO_KM * 0.0005 + TOLERANCE
-    //   } else if (this.zoom >= 18) {
-    //     return DEGREE_TO_KM * 0.001 + TOLERANCE
-    //   } else if (this.zoom >= 17) {
-    //     return DEGREE_TO_KM * 0.003 + TOLERANCE
-    //   } else if (this.zoom >= 16) {
-    //     return DEGREE_TO_KM * 0.005 + TOLERANCE
-    //   } else if (this.zoom >= 15) {
-    //     return DEGREE_TO_KM * 0.011 + TOLERANCE
-    //   } else if (this.zoom >= 14) {
-    //     return DEGREE_TO_KM * 0.022 + TOLERANCE
-    //   } else if (this.zoom >= 13) {
-    //     return DEGREE_TO_KM * 0.044 + TOLERANCE
-    //   } else if (this.zoom >= 12) {
-    //     return DEGREE_TO_KM * 0.176 + TOLERANCE
-    //   } else if (this.zoom >= 11) {
-    //     return DEGREE_TO_KM * 0.352 + TOLERANCE
-    //   } else if (this.zoom >= 10) {
-    //     return DEGREE_TO_KM * 0.703 + TOLERANCE
-    //   } else if (this.zoom >= 9) {
-    //     return DEGREE_TO_KM * 1.406 + TOLERANCE
-    //   } else if (this.zoom >= 8) {
-    //     return DEGREE_TO_KM * 2.813 + TOLERANCE
-    //   } else if (this.zoom >= 7) {
-    //     return DEGREE_TO_KM * 5.625 + TOLERANCE
-    //   } else if (this.zoom >= 6) {
-    //     return DEGREE_TO_KM * 11.25 + TOLERANCE
-    //   } else if (this.zoom >= 5) {
-    //     return DEGREE_TO_KM * 22.5 + TOLERANCE
-    //   } else if (this.zoom >= 4) {
-    //     return DEGREE_TO_KM * 45 + TOLERANCE
-    //   } else if (this.zoom >= 3) {
-    //     return DEGREE_TO_KM * 90 + TOLERANCE
-    //   } else if (this.zoom >= 2) {
-    //     return DEGREE_TO_KM * 180 + TOLERANCE
-    //   } else if (this.zoom >= 1) {
-    //     return DEGREE_TO_KM * 360 + TOLERANCE
-    //   }
-    //   return TOLERANCE
-    // },
   },
 
   watch: {
     zoom(newZoom) {
-      this.refreshLoop += 1
       this.zoomUpdate(newZoom)
     },
 
     center(newCenter) {
-      this.refreshLoop += 1
       this.curCenter = newCenter
     },
   },
@@ -173,10 +119,10 @@ export default {
       // style function and styles using OpenLayers API
       // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
       return (feature) => {
-        // console.log(feature.values_.stype)
+        this.curFeatureIndex++
         const baseStyle = new this.$ol.Style({
           image:
-            feature.values_.stype === 'ParkingSensor'
+            feature.values_?.stype === 'ParkingSensor'
               ? new this.$ol.RegularShape({
                   points: 4,
                   radius: 25 / Math.SQRT2,
@@ -186,58 +132,38 @@ export default {
                   fill: new this.$ol.Fill({
                     color: feature.values_.color,
                   }),
+                  stroke: new this.$ol.Stroke({
+                    color: feature.values_.borderColor,
+                    width: 2,
+                  }),
                 })
               : new this.$ol.Circle({
-                  radius: 12,
+                  radius: feature.values_?.stype ? 12 : 4,
                   fill: new this.$ol.Fill({
-                    color: feature.values_.color,
+                    color:
+                      feature.values_?.color ||
+                      fullTailwindConfig.theme.colors['primary-hover'],
+                  }),
+                  stroke: new this.$ol.Stroke({
+                    color:
+                      feature.values_?.borderColor ||
+                      fullTailwindConfig.theme.colors.primary,
+                    width: 2,
                   }),
                 }),
           text: new this.$ol.Text({
-            text: feature.values_.text,
+            text: feature.values_?.text || '',
+            fill: new this.$ol.Fill({
+              color:
+                feature.values_?.textColor ||
+                fullTailwindConfig.theme.colors['primary-text'],
+            }),
             textAlign: 'center',
           }),
+          zIndex: this.curFeatureIndex,
         })
         return [baseStyle]
       }
-    },
-    calcCrow(lat1, lon1, lat2, lon2) {
-      const R = 6371
-      const dLat = this.toRad(lat2 - lat1)
-      const dLon = this.toRad(lon2 - lon1)
-      lat1 = this.toRad(lat1)
-      lat2 = this.toRad(lat2)
-
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.sin(dLon / 2) *
-          Math.sin(dLon / 2) *
-          Math.cos(lat1) *
-          Math.cos(lat2)
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-      const d = R * c
-      return d
-    },
-
-    toRad(Value) {
-      return (Value * Math.PI) / 180
-    },
-
-    getStartingCenter() {
-      const center = this.config?.center
-      if (!center) {
-        return null
-      }
-
-      if (!center?.lat || !center?.lng) {
-        return null
-      }
-
-      return [center.lng, center.lat]
-    },
-
-    getLocationId(lat, lng) {
-      return lat + '-' + lng
     },
 
     clickedMap(mapData) {
@@ -249,7 +175,8 @@ export default {
       )
 
       if (!feature) {
-        console.log('onclick: no feature found')
+        // eslint-disable-next-line no-console
+        console.warn('Unknown parking')
         return
       }
 
@@ -257,7 +184,6 @@ export default {
         const item = this.points.find(
           (marker) => this.getLocationId(marker.lat, marker.lng) === result.id_
         )
-        console.log('item', item)
 
         if (item) {
           this.clickedMarker(item)
@@ -278,11 +204,7 @@ export default {
     },
 
     onMapMounted(vlMap) {
-      // vlMap here is an instance of vl-map component
-      // here vlMap.$map - ol.Map instance - is ready to use
       vlMap.refresh()
-      // vlMap.$map.addControl(new this.$ol.FullScreen())
-      // vlMap.$map.getView().fit(vectorSource.getExtent());
     },
 
     getParkingIconColor(parkingData) {

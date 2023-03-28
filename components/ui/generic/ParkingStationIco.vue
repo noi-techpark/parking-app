@@ -36,9 +36,7 @@ export default {
   @apply flex items-center justify-center w-6 h-6 rounded-full bg-primary-hover select-none;
 
   & .inner {
-    @apply flex items-center justify-center w-5 h-5 rounded-full bg-primary text-xs;
-
-    color: #76c9e2;
+    @apply flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-text text-xs;
   }
 
   &.green {
