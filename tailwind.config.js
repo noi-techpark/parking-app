@@ -13,6 +13,7 @@ module.exports = {
       colors: {
         primary: '#009CDD',
         'primary-hover': '#07AFE2',
+        'primary-text': '#76c9e2',
         secondary: '#f8f8f8',
         'secondary-hover': '#fAfAfA',
         'light-black': '#343434',

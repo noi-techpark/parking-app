@@ -1,5 +1,24 @@
 export default {
   methods: {
+    getLocationId(lat, lng) {
+      return lat + '-' + lng
+    },
+
+    getSimpleMapLocationPointDataBlock(coordinates) {
+      return {
+        id: coordinates?.y + '-' + coordinates?.x,
+        lat: coordinates.y || 0,
+        lng: coordinates.x || 0,
+        geometry: {
+          type: 'Point',
+          coordinates: [coordinates.x, coordinates.y],
+        },
+        properties: {},
+        smetadata: {},
+        type: 'Feature',
+      }
+    },
+
     copyToClipboard(text) {
       const textArea = document.createElement('textarea')
 

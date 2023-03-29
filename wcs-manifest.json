@@ -1,0 +1,34 @@
+{
+  "title": "Bolzano Parking App",
+  "description": "TODO",
+  "descriptionAbstract": "TODO",
+  "license": "AGPL-3.0-or-later",
+  "repositoryUrl": "https://github.com/noi-techpark/parking-app.git",
+  "copyrightHolders": [
+    {
+      "name": "NOI",
+      "email": "info@noi.bz.it",
+      "organization": "NOI AG/SpA Südtirol - Alto Adige",
+      "organizationUrl": "https://noi.bz.it"
+    }
+  ],
+  "authors": [
+    {
+      "name": "CodeWorks by FlashBeing",
+      "email": "info@flashbeing.com",
+      "organization": "FlashBeing s.r.l.",
+      "organizationUrl": "https://codeworks.build"
+    }
+  ],
+  "image": "wcs-logo.png",
+  "searchTags": ["TODO"],
+  "dist": {
+    "basePath": "dist/nuxt-custom-elements/bolzano-parking-app",
+    "files": ["bolzano-parking-app.js"],
+    "scripts": []
+  },
+  "configuration": {
+    "tagName": "bolzano-parking-app",
+    "options": []
+  }
+}

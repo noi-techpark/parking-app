@@ -3,7 +3,7 @@
     <h2 class="title">{{ name }}</h2>
     <div class="map-preview">
       <Map
-        :markers="parkingMarker"
+        :points="parkingMarker"
         :center="mapCenter"
         :options="MAP_OPTIONS"
         map-type="roadmap"
@@ -77,7 +77,11 @@
 </template>
 
 <script>
+import utils from '~/mixins/utils'
+
 export default {
+  mixins: [utils],
+
   props: {
     data: {
       type: Object,
@@ -98,7 +102,13 @@ export default {
 
   computed: {
     name() {
-      return this.data.smetadata?.standard_name || this.data.sname
+      return (
+        this.data.smetadata?.standard_name ||
+        this.data.smetadata?.group ||
+        this.data.sname ||
+        this.data.smetadata?.municipality ||
+        this.$t('common.parking')
+      )
     },
 
     mapCenter() {
@@ -110,12 +120,7 @@ export default {
     },
 
     parkingMarker() {
-      return [
-        {
-          lat: this.data.scoordinate.y || 0,
-          lng: this.data.scoordinate.x || 0,
-        },
-      ]
+      return [this.getSimpleMapLocationPointDataBlock(this.data.scoordinate)]
     },
   },
 
