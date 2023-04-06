@@ -40,13 +40,11 @@ jobs:
           s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
           folder: ./dist
 
-  deploy-map-performance:
+  deploy-webcomponent-test:
     runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/map-performance'
+    if: github.ref == 'refs/heads/main'
     needs: test
-    concurrency: deploy-map-performance
-    env:
-      AWS_S3_BUCKET_NAME : 'com.opendatahub.parking-test-2'
+    concurrency: deploy-webcomponent-test
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
@@ -54,14 +52,10 @@ jobs:
         with:
           build-command: yarn generate
 
-      - name: Sync to S3 bucket
-        uses: noi-techpark/github-actions/aws-s3-bucket-sync@v2
+      - uses: noi-techpark/github-actions/webcomp-push@v2
         with:
-          access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-          region: ${{ env.AWS_REGION }}
-          s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
-          folder: ./dist
+          keycloak-secret: ${{secrets.WCSTORE_CLI_KEYCLOAK_SECRET_TEST}}
+          version-tag: ${{github.sha}}
 
   # deploy-prod:
   #   runs-on: ubuntu-20.04

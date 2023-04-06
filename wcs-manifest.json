@@ -1,7 +1,7 @@
 {
   "title": "Bolzano Parking App",
-  "description": "TODO",
-  "descriptionAbstract": "TODO",
+  "description": "Showing the real time data and predictions of parking spaces in Bolzano and South Tyrol",
+  "descriptionAbstract": "Parking spaces in South Tyrol",
   "license": "AGPL-3.0-or-later",
   "repositoryUrl": "https://github.com/noi-techpark/parking-app.git",
   "copyrightHolders": [
@@ -21,7 +21,13 @@
     }
   ],
   "image": "wcs-logo.png",
-  "searchTags": ["TODO"],
+  "searchTags": [
+    "parking",
+    "mobility",
+    "map",
+    "real time",
+    "predictions"
+  ],
   "dist": {
     "basePath": "dist/nuxt-custom-elements/bolzano-parking-app",
     "files": ["bolzano-parking-app.js"],
