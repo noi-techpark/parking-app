@@ -1,5 +1,6 @@
 {
   "title": "Bolzano Parking App",
+  "shortName": "parking-app",
   "description": "Showing the real time data and predictions of parking spaces in Bolzano and South Tyrol",
   "descriptionAbstract": "Parking spaces in South Tyrol",
   "license": "AGPL-3.0-or-later",
