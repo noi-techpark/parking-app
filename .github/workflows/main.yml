@@ -16,7 +16,7 @@ jobs:
 
       - uses: noi-techpark/github-actions/yarn-build@v2
 
-
+  # https://parking.opendatahub.testingmachine.eu
   deploy-test:
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main'
@@ -40,6 +40,8 @@ jobs:
           s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
           folder: ./dist
 
+  # https://parking.opendatahub.com
+  # https://parking.bz.it
   deploy-prod:
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/prod'
@@ -63,6 +65,7 @@ jobs:
           s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
           folder: ./dist
 
+  # webcomponent
   deploy-webcomponent-test:
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main'
