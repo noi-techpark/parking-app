@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: parking-app
+Upstream-Contact: NOI Techpark <digital@noi.bz.it>
+Source: https://github.com/noi-techpark/parking-app
+
+Files: .github/* .gitignore LICENSE.md .editorconfig .prettierrc *.png *.svg *.json *.ico yarn.lock
+Copyright: (c) NOI Techpark <digital@noi.bz.it>
+License: CC0-1.0
