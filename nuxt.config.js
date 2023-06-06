@@ -16,11 +16,20 @@ export default {
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: '' },
+      { hid: 'description', name: 'description', content: 'plapla' },
       { name: 'format-detection', content: 'telephone=no' },
     ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    link: [
+      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      { rel: 'stylesheet', href: 'https://scripts.opendatahub.com/cookieconsent/opendatahub/cookieconsent.css' }
+    ],
+    script: [
+      { body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent.js' },
+      { body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent-init.js' },
+      { type: 'text/plain', 'data-cookiecategory': 'targeting', src: './matomo.js' },
+    ]
   },
+
 
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [],
