@@ -4,7 +4,9 @@
 
 import i18nOptions from './plugins/i18n.options'
 
-export default {
+const matomo = process.env.MATOMO;
+
+let config = {
   ssr: false,
 
   // Global page headers: https://go.nuxtjs.dev/config-head
@@ -21,12 +23,6 @@ export default {
     ],
     link: [
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      { rel: 'stylesheet', href: 'https://scripts.opendatahub.com/cookieconsent/opendatahub/cookieconsent.css' }
-    ],
-    script: [
-      { body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent.js' },
-      { body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent-init.js' },
-      { type: 'text/plain', 'data-cookiecategory': 'targeting', src: './matomo.js' },
     ]
   },
 
@@ -126,4 +122,18 @@ export default {
   pageTransition: 'zoom-page',
 
   telemetry: false,
+};
+
+// set env var 'MATOMO = true' to enable matomo for websites
+// keep deactivated for webcomponents
+if (matomo && matomo === 'true') {
+  console.log("MATOMO ENABLED");
+  console.log(matomo);
+  config.head.link.push({ rel: 'stylesheet', href: 'https://scripts.opendatahub.com/cookieconsent/opendatahub/cookieconsent.css' });
+  config.head.scripts = [];
+  config.head.scripts.push({ body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent.js' });
+  config.head.scripts.push({ body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent-init.js' });
+  config.head.scripts.push({ type: 'text/plain', 'data-cookiecategory': 'targeting', src: './matomo.js' });
 }
+
+export default config;
