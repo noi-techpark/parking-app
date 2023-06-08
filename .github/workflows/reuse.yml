@@ -1,4 +1,4 @@
-name: Reuse Compliance
+name: REUSE Compliance Check
 
 on: push
 
