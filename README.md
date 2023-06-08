@@ -6,7 +6,7 @@ SPDX-License-Identifier: CC0-1.0
 
 # Bolzano Parking App
 
-![REUSE Compliance](https://github.com/noi-techpark/parking-app/actions/workflows/reuse.yml/badge.svg)
+![REUSE Compliance Check](https://github.com/noi-techpark/parking-app/actions/workflows/reuse.yml/badge.svg)
 
 ## Build Setup
 
