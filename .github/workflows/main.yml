@@ -23,7 +23,8 @@ jobs:
     needs: test
     concurrency: deploy-test
     env:
-      AWS_S3_BUCKET_NAME : 'com.opendatahub.parking-test'
+      AWS_S3_BUCKET_NAME: 'com.opendatahub.parking-test'
+      MATOMO: true
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
@@ -48,7 +49,8 @@ jobs:
     needs: test
     concurrency: deploy-prod
     env:
-      AWS_S3_BUCKET_NAME : 'com.opendatahub.parking-prod'
+      AWS_S3_BUCKET_NAME: 'com.opendatahub.parking-prod'
+      MATOMO: true
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
@@ -71,6 +73,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     needs: test
     concurrency: deploy-webcomponent-test
+    env:
+      MATOMO: false
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
@@ -88,6 +92,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
     concurrency: deploy-webcomponent-prod
+    env:
+      MATOMO: false
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
