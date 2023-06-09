@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
-
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v1
       - uses: noi-techpark/github-actions/yarn-build@v2
 
   # https://parking.opendatahub.testingmachine.eu
