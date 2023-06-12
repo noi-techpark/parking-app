@@ -34,7 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </vl-layer-tile>
       <vl-layer-vector>
         <vl-source-vector :features="features"></vl-source-vector>
-        <vl-style-func :factory="markerStyleFunc" />
+        <vl-style-func :function="markerStyleFunc" />
       </vl-layer-vector>
     </vl-map>
   </div>
@@ -131,55 +131,55 @@ export default {
   },
 
   methods: {
-    markerStyleFunc() {
+    markerStyleFunc(feature) {
       // style function and styles using OpenLayers API
       // https://openlayers.org/en/latest/apidoc/module-ol_style_Style.html
-      return (feature) => {
-        this.curFeatureIndex++
-        const baseStyle = new Style({
-          image:
-            feature.values_?.stype === 'ParkingSensor'
-              ? new RegularShape({
-                  points: 4,
-                  radius: 25 / Math.SQRT2,
-                  radius2: 25,
-                  angle: 0,
-                  scale: [1, 0.5],
-                  fill: new Fill({
-                    color: feature.values_.color,
-                  }),
-                  stroke: new Stroke({
-                    color: feature.values_.borderColor,
-                    width: 2,
-                  }),
-                })
-              : new Circle({
-                  radius: feature.values_?.stype ? 12 : 4,
-                  fill: new Fill({
-                    color:
-                      feature.values_?.color ||
-                      fullTailwindConfig.theme.colors['primary-hover'],
-                  }),
-                  stroke: new Stroke({
-                    color:
-                      feature.values_?.borderColor ||
-                      fullTailwindConfig.theme.colors.primary,
-                    width: 2,
-                  }),
+
+      // fix here to use function instead of factory https://github.com/ghettovoice/vuelayers/issues/462#issuecomment-976523858
+      this.curFeatureIndex++
+      const baseStyle = new Style({
+        image:
+          feature.values_?.stype === 'ParkingSensor'
+            ? new RegularShape({
+                points: 4,
+                radius: 25 / Math.SQRT2,
+                radius2: 25,
+                angle: 0,
+                scale: [1, 0.5],
+                fill: new Fill({
+                  color: feature.values_.color,
                 }),
-          text: new Text({
-            text: feature.values_?.text || '',
-            fill: new Fill({
-              color:
-                feature.values_?.textColor ||
-                fullTailwindConfig.theme.colors['primary-text'],
-            }),
-            textAlign: 'center',
+                stroke: new Stroke({
+                  color: feature.values_.borderColor,
+                  width: 2,
+                }),
+              })
+            : new Circle({
+                radius: feature.values_?.stype ? 12 : 4,
+                fill: new Fill({
+                  color:
+                    feature.values_?.color ||
+                    fullTailwindConfig.theme.colors['primary-hover'],
+                }),
+                stroke: new Stroke({
+                  color:
+                    feature.values_?.borderColor ||
+                    fullTailwindConfig.theme.colors.primary,
+                  width: 2,
+                }),
+              }),
+        text: new Text({
+          text: feature.values_?.text || '',
+          fill: new Fill({
+            color:
+              feature.values_?.textColor ||
+              fullTailwindConfig.theme.colors['primary-text'],
           }),
-          zIndex: this.curFeatureIndex,
-        })
-        return [baseStyle]
-      }
+          textAlign: 'center',
+        }),
+        zIndex: this.curFeatureIndex,
+      })
+      return [baseStyle]
     },
 
     clickedMap(mapData) {
