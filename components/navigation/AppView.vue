@@ -343,7 +343,7 @@ export default {
       this.onStreetParkings = await onStreetParkings.json()
 
       const offlineParkings = await fetch(
-        'https://tourism.opendatahub.bz.it/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000&removenullvalues=true&fields=Detail,GpsInfo'
+        'https://tourism.opendatahub.com/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000&removenullvalues=true&fields=Detail,GpsInfo'
       ).catch((error) => {
         this.handleError(error)
       })
