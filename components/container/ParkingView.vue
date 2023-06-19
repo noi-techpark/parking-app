@@ -16,6 +16,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         hide-credits
       />
     </div>
+    <p>
+      {{ timestamp }}
+    </p>
     <div class="parking-details">
       <span
         v-if="
@@ -127,6 +130,11 @@ export default {
 
     parkingMarker() {
       return [this.getSimpleMapLocationPointDataBlock(this.data.scoordinate)]
+    },
+    timestamp() {
+      return this.data.mvalidtime
+        ? new Date(this.data.mvalidtime).toLocaleString('it-It')
+        : ''
     },
   },
 

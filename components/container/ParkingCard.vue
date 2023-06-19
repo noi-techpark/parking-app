@@ -44,6 +44,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         <p v-else class="park-notice">
           {{ $t('common.noForecastsAvailable') }}
         </p>
+        <p>
+          {{ timestamp }}
+        </p>
       </div>
     </div>
   </div>
@@ -76,6 +79,9 @@ export default {
   computed: {
     name() {
       return this.data.smetadata?.standard_name || this.data.sname
+    },
+    timestamp(){
+      return new Date(this.data.mvalidtime).toLocaleString("it-It");
     },
 
     totalCapacity() {
