@@ -13,7 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       red: realTime && (available === 0 || available / total < 0.2),
     }"
   >
-    <span class="count">
+    <span id="count">
       {{ available }}
     </span>
   </div>
@@ -64,8 +64,8 @@ export default {
 </script>
 
 <style lang="postcss">
-& .count {
-  @apply font-bold text-4xl text-base;
+#count {
+  @apply font-bold text-4xl;
 }
 
 .available-slots {
