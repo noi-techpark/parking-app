@@ -64,14 +64,14 @@ export default {
 </script>
 
 <style lang="postcss">
+& .count {
+  @apply font-bold text-4xl text-base;
+}
+
 .available-slots {
   @apply flex gap-1 items-center justify-center px-3 rounded-md bg-green text-white normal-case;
 
   height: 100%;
-
-  & .count {
-    @apply font-bold text-4xl text-base;
-  }
 
   &.orange {
     @apply bg-orange-hover;
