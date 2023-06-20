@@ -44,10 +44,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         <p v-else class="park-notice">
           {{ $t('common.noForecastsAvailable') }}
         </p>
-        <p>
-          {{ timestamp }}
-        </p>
       </div>
+      <div class="timestamp">{{ $t('common.lastUpdate') }} {{ timestamp }}</div>
     </div>
   </div>
 </template>
@@ -80,8 +78,14 @@ export default {
     name() {
       return this.data.smetadata?.standard_name || this.data.sname
     },
-    timestamp(){
-      return new Date(this.data.mvalidtime).toLocaleString("it-It");
+
+    timestamp() {
+      const date = new Date(this.data.mvalidtime)
+      return `${date.getHours()}:${String('0' + date.getMinutes()).slice(
+        -2
+      )} ${date.getDate()}/${date.getMonth() + 1}/${String(
+        date.getFullYear()
+      ).slice(-2)}`
     },
 
     totalCapacity() {
@@ -102,6 +106,10 @@ export default {
 <style lang="postcss" scoped>
 .parking-card {
   @apply flex gap-3 bg-secondary rounded-lg py-3 px-3 select-none cursor-pointer;
+
+  & .timestamp {
+    @apply text-grey text-sm;
+  }
 
   & .map-ct {
     @apply relative w-24 h-24 rounded-md;

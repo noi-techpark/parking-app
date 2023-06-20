@@ -12,6 +12,7 @@
     "totalParkingSlots": "{number} total slots",
     "goToParking": "Go to parking",
     "noForecastsAvailable": "No forecasts available.",
+    "lastUpdate": "Last update",
     "min": "min",
     "realTimeParkings": "Real time parkings",
     "allParkings": "All parkings",

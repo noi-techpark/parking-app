@@ -16,9 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         hide-credits
       />
     </div>
-    <p>
-      {{ timestamp }}
-    </p>
+    <div class="timestamp">{{ $t('common.lastUpdate') }} {{ timestamp }}</div>
     <div class="parking-details">
       <span
         v-if="
@@ -132,9 +130,11 @@ export default {
       return [this.getSimpleMapLocationPointDataBlock(this.data.scoordinate)]
     },
     timestamp() {
-      return this.data.mvalidtime
-        ? new Date(this.data.mvalidtime).toLocaleString('it-It')
-        : ''
+      if (!this.data.mvalidtime) return ''
+      const date = new Date(this.data.mvalidtime)
+      return `${date.getHours()}:${String('0' + date.getMinutes()).slice(
+        -2
+      )}, ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
     },
   },
 
@@ -149,6 +149,10 @@ export default {
 <style lang="postcss" scoped>
 .parking-view {
   @apply pt-4;
+
+  & .timestamp {
+    @apply text-grey;
+  }
 
   & .title {
     @apply text-xl mb-1 font-medium;
