@@ -70,7 +70,7 @@ export default {
   height: 100%;
 
   & .count {
-    @apply text-4xl font-bold;
+    @apply font-bold text-4xl text-base;
   }
 
   &.orange {
