@@ -294,7 +294,6 @@ export default {
       if (this.currentParkingType === 'all') {
         data = [...data, ...this.offlineParkingCards]
       }
-
       return data
     },
 

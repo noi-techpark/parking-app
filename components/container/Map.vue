@@ -18,6 +18,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       :load-tiles-while-animating="true"
       :load-tiles-while-interacting="true"
       data-projection="EPSG:4326"
+      feature-projection="EPSG:4326"
       show-center
       class="map"
       @singleclick="clickedMap"
@@ -33,8 +34,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         <vl-source-osm></vl-source-osm>
       </vl-layer-tile>
       <vl-layer-vector>
-        <vl-source-vector :features="features"></vl-source-vector>
-        <vl-style-func :function="markerStyleFunc" />
+        <vl-source-cluster :distance="40">
+          <vl-source-vector :features="features"></vl-source-vector>
+          <vl-style-func :function="markerStyleFunc" />
+        </vl-source-cluster>
       </vl-layer-vector>
     </vl-map>
   </div>
@@ -137,49 +140,75 @@ export default {
 
       // fix here to use function instead of factory https://github.com/ghettovoice/vuelayers/issues/462#issuecomment-976523858
       this.curFeatureIndex++
-      const baseStyle = new Style({
-        image:
-          feature.values_?.stype === 'ParkingSensor'
-            ? new RegularShape({
-                points: 4,
-                radius: 25 / Math.SQRT2,
-                radius2: 25,
-                angle: 0,
-                scale: [1, 0.5],
-                fill: new Fill({
-                  color: feature.values_.color,
+
+      const size = feature.get('features').length
+
+      if (size === 1) {
+        feature = feature.get('features')[0]
+        const baseStyle = new Style({
+          image:
+            feature.values_?.stype === 'ParkingSensor'
+              ? new RegularShape({
+                  points: 4,
+                  radius: 25 / Math.SQRT2,
+                  radius2: 25,
+                  angle: 0,
+                  scale: [1, 0.5],
+                  fill: new Fill({
+                    color: feature.values_.color,
+                  }),
+                  stroke: new Stroke({
+                    color: feature.values_.borderColor,
+                    width: 2,
+                  }),
+                })
+              : new Circle({
+                  radius: feature.values_?.stype ? 12 : 4,
+                  fill: new Fill({
+                    color:
+                      feature.values_?.color ||
+                      fullTailwindConfig.theme.colors['primary-hover'],
+                  }),
+                  stroke: new Stroke({
+                    color:
+                      feature.values_?.borderColor ||
+                      fullTailwindConfig.theme.colors.primary,
+                    width: 2,
+                  }),
                 }),
-                stroke: new Stroke({
-                  color: feature.values_.borderColor,
-                  width: 2,
-                }),
-              })
-            : new Circle({
-                radius: feature.values_?.stype ? 12 : 4,
-                fill: new Fill({
-                  color:
-                    feature.values_?.color ||
-                    fullTailwindConfig.theme.colors['primary-hover'],
-                }),
-                stroke: new Stroke({
-                  color:
-                    feature.values_?.borderColor ||
-                    fullTailwindConfig.theme.colors.primary,
-                  width: 2,
-                }),
-              }),
-        text: new Text({
-          text: feature.values_?.text || '',
-          fill: new Fill({
-            color:
-              feature.values_?.textColor ||
-              fullTailwindConfig.theme.colors['primary-text'],
+          text: new Text({
+            text: feature.values_?.text || '',
+            fill: new Fill({
+              color:
+                feature.values_?.textColor ||
+                fullTailwindConfig.theme.colors['primary-text'],
+            }),
+            textAlign: 'center',
           }),
-          textAlign: 'center',
-        }),
-        zIndex: this.curFeatureIndex,
-      })
-      return [baseStyle]
+          zIndex: this.curFeatureIndex,
+        })
+        return [baseStyle]
+      } else {
+        // from https://github.com/ghettovoice/vuelayers-demo/blob/8195bff514de8a99ec16cab5f43118499e428726/src/components/Map.vue#L681
+        const cache = {}
+        let style = cache[size]
+        if (!style) {
+          style = new Style({
+            image: new Circle({
+              radius: 18,
+              fill: new Fill({ color: '#3399cc' }),
+              stroke: new Stroke({ color: '#fff', width: 3 }),
+            }),
+            text: new Text({
+              text: size.toString(),
+              fill: new Fill({ color: '#fff' }),
+            }),
+            zIndex: this.curFeatureIndex,
+          })
+          cache[size] = style
+        }
+        return [style]
+      }
     },
 
     clickedMap(mapData) {
@@ -197,12 +226,26 @@ export default {
       }
 
       feature.then((result) => {
-        const item = this.points.find(
-          (marker) => this.getLocationId(marker.lat, marker.lng) === result.id_
-        )
+        const size = result.get('features').length
 
-        if (item) {
-          this.clickedMarker(item)
+        if (size === 1) {
+          // single marker clicked => show detail
+          result = result.get('features')[0]
+          const item = this.points.find(
+            (marker) =>
+              this.getLocationId(marker.lat, marker.lng) === result.id_
+          )
+
+          if (item) {
+            this.clickedMarker(item)
+          }
+        } else {
+          // to fix center, projection needs somehow to be changed or converted from EPSG:3857 to EPSG:4326
+          // https://epsg.io/transform#s_srs=3857&t_srs=4326&x=NaN&y=NaN
+          mapData.map.getView().animate({
+            zoom: this.zoom + 2,
+            duration: 600,
+          })
         }
       })
     },
