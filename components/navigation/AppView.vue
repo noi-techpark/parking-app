@@ -424,7 +424,7 @@ export default {
       this.offlineParkingCards = offlineParkings
 
       // sort for mvalidtime to have not real time parking information at last
-      this.parkingCards.sort((a, b) => a.mvalidtime < b.mvalidtime)
+      // this.parkingCards.sort((a, b) => a.mvalidtime < b.mvalidtime)
     },
 
     constructMapData() {
