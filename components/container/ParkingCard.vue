@@ -6,8 +6,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
   <div class="parking-card">
-    <div class="map-ct">
-      <!-- <Map
+    <!-- <div class="map-ct">
+      <Map
         :points="parkingMarker"
         :center="mapCenter"
         :options="MAP_OPTIONS"
@@ -15,8 +15,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         class="map"
         hide-controls
         hide-credits
-      /> -->
-      <!-- <span
+      />
+       <span
         v-if="
           data.stype === 'ParkingStation' || data.stype === 'OfflineParking'
         "
@@ -25,14 +25,24 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </span>
       <span v-if="data.stype === 'ParkingSensor'">
         <StreetParkingIco text="P" class="parking-ico" />
-      </span> -->
+      </span>
       <AvailableSlotsBadge
         v-if="data.stype !== 'OfflineParking'"
         :total="totalCapacity"
         :occupied="data.mvalue"
         class="slots-badge"
       />
+    </div> -->
+
+    <div class="available-slots-ct">
+      <AvailableSlotsCard
+        v-if="data.stype !== 'OfflineParking'"
+        :total="totalCapacity"
+        :occupied="data.mvalue"
+        class="slots-badge"
+      />
     </div>
+
     <div class="details">
       <h2>{{ name }}</h2>
       <div class="graph-ct">
@@ -108,25 +118,13 @@ export default {
   @apply relative flex gap-3 bg-secondary rounded-lg py-3 px-3 select-none cursor-pointer;
 
   & .timestamp {
-    @apply text-grey text-sm absolute -right-0 -bottom-0;
+    @apply text-grey text-sm absolute -left-0 -bottom-0 pl-3;
   }
 
-  & .map-ct {
+  & .available-slots-ct {
     @apply relative w-24 h-24 rounded-md;
 
     flex-shrink: 0;
-
-    & .map {
-      @apply rounded-md pointer-events-none overflow-hidden;
-    }
-
-    & .parking-ico {
-      @apply absolute -left-1 -top-2;
-    }
-
-    & .slots-badge {
-      flex-grow: 1;
-    }
   }
 
   & .details {
