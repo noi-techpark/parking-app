@@ -8,8 +8,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
   <div
     :class="{
       'available-slots': true,
-      orange: available / total >= 0.2 && available / total < 0.5,
-      red: available === 0 || available / total < 0.2,
+      gray: !realTime,
+      orange: realTime && available / total >= 0.2 && available / total < 0.5,
+      red: realTime && (available === 0 || available / total < 0.2),
     }"
   >
     <span class="count">
@@ -31,13 +32,22 @@ export default {
       required: false,
       default: null,
     },
+    timestamp: {
+      type: Number,
+      required: false,
+      default: null,
+    },
   },
 
   computed: {
     available() {
       return this.total - this.occupied
     },
-
+    realTime() {
+      const referenceDate = new Date()
+      referenceDate.setHours(referenceDate.getHours() - 4)
+      return this.timestamp > referenceDate
+    },
     label() {
       if (this.total > 1) {
         return this.available === 1
@@ -69,6 +79,10 @@ export default {
 
   &.red {
     @apply bg-red-hover;
+  }
+
+  &.gray {
+    @apply bg-grey;
   }
 }
 </style>

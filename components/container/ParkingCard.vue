@@ -39,6 +39,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         v-if="data.stype !== 'OfflineParking'"
         :total="totalCapacity"
         :occupied="data.mvalue"
+        :timestamp="new Date(data.mvalidtime)"
         class="slots-badge"
       />
     </div>
