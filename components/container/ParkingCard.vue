@@ -6,58 +6,32 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <template>
   <div class="parking-card">
-    <!-- <div class="map-ct">
-      <Map
-        :points="parkingMarker"
-        :center="mapCenter"
-        :options="MAP_OPTIONS"
-        map-type="roadmap"
-        class="map"
-        hide-controls
-        hide-credits
-      />
-       <span
-        v-if="
-          data.stype === 'ParkingStation' || data.stype === 'OfflineParking'
-        "
-      >
-        <ParkingStationIco text="P" class="parking-ico" />
-      </span>
-      <span v-if="data.stype === 'ParkingSensor'">
-        <StreetParkingIco text="P" class="parking-ico" />
-      </span>
-      <AvailableSlotsBadge
-        v-if="data.stype !== 'OfflineParking'"
-        :total="totalCapacity"
-        :occupied="data.mvalue"
-        class="slots-badge"
-      />
-    </div> -->
-
-    <div class="available-slots-ct">
-      <AvailableSlotsCard
-        v-if="data.stype !== 'OfflineParking'"
-        :total="totalCapacity"
-        :occupied="data.mvalue"
-        :timestamp="new Date(data.mvalidtime)"
-        class="slots-badge"
-      />
-    </div>
-
-    <div class="details">
-      <h2>{{ name }}</h2>
-      <div class="graph-ct">
-        <ParkingAvailabilityGraph
-          v-if="data.stype === 'ParkingStation'"
-          :forecast="data.forecast"
-          :limit-dataset="4"
+    <div class="column">
+      <div class="available-slots-ct">
+        <AvailableSlotsCard
+          v-if="data.stype !== 'OfflineParking'"
+          :total="totalCapacity"
+          :occupied="data.mvalue"
+          :timestamp="new Date(data.mvalidtime)"
+          class="slots-badge"
         />
-        <p v-else class="park-notice">
-          {{ $t('common.noForecastsAvailable') }}
-        </p>
       </div>
-      <div class="timestamp">{{ $t('common.lastUpdate') }} {{ timestamp }}</div>
+
+      <div class="details">
+        <h2>{{ name }}</h2>
+        <div class="graph-ct">
+          <ParkingAvailabilityGraph
+            v-if="data.stype === 'ParkingStation'"
+            :forecast="data.forecast"
+            :limit-dataset="4"
+          />
+          <p v-else class="park-notice">
+            {{ $t('common.noForecastsAvailable') }}
+          </p>
+        </div>
+      </div>
     </div>
+    <div class="timestamp">{{ $t('common.lastUpdate') }} {{ timestamp }}</div>
   </div>
 </template>
 
@@ -116,10 +90,14 @@ export default {
 
 <style lang="postcss" scoped>
 .parking-card {
-  @apply relative flex gap-3 bg-secondary rounded-lg py-3 px-3 select-none cursor-pointer;
+  @apply relative flex-row gap-3 bg-secondary rounded-lg py-3 px-3 select-none cursor-pointer;
+
+  & .column {
+    @apply flex gap-3 mb-2;
+  }
 
   & .timestamp {
-    @apply text-grey text-sm absolute -left-0 -bottom-0 pl-3;
+    @apply text-grey text-sm;
   }
 
   & .available-slots-ct {

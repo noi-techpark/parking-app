@@ -33,7 +33,7 @@ export default {
       default: null,
     },
     timestamp: {
-      type: Number,
+      type: Date,
       required: false,
       default: null,
     },
@@ -67,10 +67,10 @@ export default {
 .available-slots {
   @apply flex gap-1 items-center justify-center px-3 rounded-md bg-green text-white normal-case;
 
-  height: 90%;
+  height: 100%;
 
   & .count {
-    @apply text-5xl font-bold text-base;
+    @apply text-4xl font-bold;
   }
 
   &.orange {
