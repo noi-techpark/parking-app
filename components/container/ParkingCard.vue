@@ -7,7 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <template>
   <div class="parking-card">
     <div class="map-ct">
-      <Map
+      <!-- <Map
         :points="parkingMarker"
         :center="mapCenter"
         :options="MAP_OPTIONS"
@@ -15,8 +15,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         class="map"
         hide-controls
         hide-credits
-      />
-      <span
+      /> -->
+      <!-- <span
         v-if="
           data.stype === 'ParkingStation' || data.stype === 'OfflineParking'
         "
@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </span>
       <span v-if="data.stype === 'ParkingSensor'">
         <StreetParkingIco text="P" class="parking-ico" />
-      </span>
+      </span> -->
       <AvailableSlotsBadge
         v-if="data.stype !== 'OfflineParking'"
         :total="totalCapacity"
@@ -105,10 +105,10 @@ export default {
 
 <style lang="postcss" scoped>
 .parking-card {
-  @apply flex gap-3 bg-secondary rounded-lg py-3 px-3 select-none cursor-pointer;
+  @apply relative flex gap-3 bg-secondary rounded-lg py-3 px-3 select-none cursor-pointer;
 
   & .timestamp {
-    @apply text-grey text-sm;
+    @apply text-grey text-sm absolute -right-0 -bottom-0;
   }
 
   & .map-ct {
@@ -125,7 +125,7 @@ export default {
     }
 
     & .slots-badge {
-      @apply absolute -right-1 -bottom-1;
+      flex-grow: 1;
     }
   }
 

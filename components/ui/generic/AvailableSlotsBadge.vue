@@ -64,11 +64,11 @@ export default {
   padding-bottom: 0.1rem;
 
   & .count {
-    @apply text-base;
+    @apply text-xl text-base;
   }
 
   & .label {
-    @apply text-sm opacity-75;
+    @apply text-xl opacity-75;
   }
 
   &.orange {
