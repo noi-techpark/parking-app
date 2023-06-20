@@ -358,12 +358,12 @@ export default {
     getParkingIconColors(parkingData) {
       let color = fullTailwindConfig.theme.colors.green
       let borderColor = fullTailwindConfig.theme.colors['green-hover']
-      let textColor = fullTailwindConfig.theme.colors['dark-green']
+      const textColor = '#FFFF'
 
       if (parkingData.stype === 'OfflineParking') {
         color = fullTailwindConfig.theme.colors.primary
         borderColor = fullTailwindConfig.theme.colors['primary-hover']
-        textColor = fullTailwindConfig.theme.colors['primary-text']
+        // textColor = fullTailwindConfig.theme.colors['primary-text']
       }
 
       const total = parkingData.smetadata?.capacity || 1
@@ -372,13 +372,13 @@ export default {
       if (available / total >= 0.2 && available / total < 0.5) {
         color = fullTailwindConfig.theme.colors.orange
         borderColor = fullTailwindConfig.theme.colors['orange-hover']
-        textColor = fullTailwindConfig.theme.colors['dark-orange']
+        // textColor = fullTailwindConfig.theme.colors['primary-text']
       }
 
       if (available === 0 || available / total < 0.2) {
         color = fullTailwindConfig.theme.colors.red
         borderColor = fullTailwindConfig.theme.colors['red-hover']
-        textColor = fullTailwindConfig.theme.colors['dark-red']
+        // textColor = fullTailwindConfig.theme.colors['primary-text']
       }
 
       return {
