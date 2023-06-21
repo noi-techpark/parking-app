@@ -17,6 +17,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script>
+'use strict'
 import resolveConfig from 'tailwindcss/resolveConfig'
 import tailwindConfigFile from '~/tailwind.config'
 const tailwindConfig = resolveConfig(tailwindConfigFile)

@@ -13,7 +13,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         :center="mapCenter"
         :options="MAP_OPTIONS"
         map-type="roadmap"
-        @zoomUpdate="handleZoomUpdate"
         @clickedMarker="clickedMarker"
       />
     </div>
@@ -126,6 +125,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script>
+'use strict'
 import vueI18n from '@/plugins/vueI18n'
 import 'tailwindcss/tailwind.css'
 import '@/assets/css/animations.css'
@@ -177,7 +177,6 @@ export default {
       currentLocation: 'bolzano',
       currentParkingType: 'live',
       expandedLocationsBar: false,
-      groupStreetParkings: true,
     }
   },
 
@@ -263,7 +262,7 @@ export default {
           stype: card.stype,
           mvalue: card.mvalue,
           smetadata: {
-            capacity: card.smetadata?.capacity,
+            capacity: card.smetadata?.capacity || 1,
           },
           lat: card.scoordinate?.y,
           lng: card.scoordinate?.x,
@@ -287,9 +286,7 @@ export default {
     },
 
     mapData() {
-      let data = this.groupStreetParkings
-        ? this.zoomedMapData
-        : this.defaultMapData
+      let data = this.defaultMapData
 
       if (this.currentParkingType === 'all') {
         data = [...data, ...this.offlineParkingCards]
@@ -335,7 +332,7 @@ export default {
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.free)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime'
       ).catch((error) => {
         this.handleError(error)
       })
@@ -348,8 +345,8 @@ export default {
       })
       this.offlineParkings = await offlineParkings.json()
 
-      this.constructData()
       this.constructMapData()
+      this.constructData()
 
       this.loadedData = true
     },
@@ -408,7 +405,9 @@ export default {
       if (this.onStreetParkings?.data) {
         parkings = [
           ...parkings,
-          ...this.normalizeParkingDataset(this.onStreetParkings?.data),
+          ...this.normalizeAndGroupOnStreetParkings(
+            this.onStreetParkings?.data
+          ),
         ]
       }
 
@@ -428,15 +427,10 @@ export default {
 
     constructMapData() {
       let data = []
-      let zoomedData = []
 
       if (this.parkingStations?.data) {
         data = [
           ...data,
-          ...this.normalizeParkingDataset(this.parkingStations?.data),
-        ]
-        zoomedData = [
-          ...zoomedData,
           ...this.normalizeParkingDataset(this.parkingStations?.data),
         ]
       }
@@ -446,14 +440,9 @@ export default {
           ...data,
           ...this.normalizeParkingDataset(this.onStreetParkings?.data),
         ]
-        zoomedData = [
-          ...zoomedData,
-          ...this.normalizeParkingDataset(this.onStreetParkings?.data),
-        ]
       }
 
       this.defaultMapData = data
-      this.zoomedMapData = zoomedData
     },
 
     autoFetch(fetch) {
@@ -545,7 +534,11 @@ export default {
 
         if (rawData[parkingId].mperiod >= parking.mperiod) {
           rawData[parkingId].mperiod = parking.mperiod
-          rawData[parkingId].mvalue = Math.round(parking.mvalue)
+
+          // we use occupied datatype, so to get free slots: 1 - occupied slots
+          if (parking.stype === 'ParkingSensor')
+            rawData[parkingId].mvalue = 1 - Math.round(parking.mvalue)
+          else rawData[parkingId].mvalue = Math.round(parking.mvalue)
         }
         if (parking.mperiod !== 300 || parking.ttype === 'Instantaneous') {
           rawData[parkingId].forecast.push({
@@ -559,6 +552,34 @@ export default {
         rawData[parkingId].forecast = rawData[parkingId].forecast.sort(
           (a, b) => a.mperiod - b.mperiod
         )
+      })
+
+      return Object.values(rawData)
+    },
+
+    normalizeAndGroupOnStreetParkings(dataset) {
+      const rawData = {}
+
+      const baseId = new Date().getTime()
+      dataset.forEach((parking) => {
+        const parkingId = baseId + '-' + parking.smetadata.group
+
+        if (!rawData[parkingId]) {
+          rawData[parkingId] = { ...JSON.parse(JSON.stringify(parking)) }
+          rawData[parkingId].id = parkingId
+          rawData[parkingId].smetadata.capacity = 0
+        }
+
+        // we use occupied datatype, so to get free slots: 1 - occupied slots
+        rawData[parkingId].mvalue += 1 - Math.round(parking.mvalue)
+
+        rawData[parkingId].smetadata.capacity += 1
+
+        // use latest mvalidtime for parking sensor groups
+        if (
+          new Date(rawData[parkingId].mvalidtime) < new Date(parking.mvalidtime)
+        )
+          rawData[parkingId].mvalidtime = parking.mvalidtime
       })
 
       return Object.values(rawData)
@@ -595,38 +616,7 @@ export default {
 
       return parkings
     },
-    groupOnStreetParkings(onstreetParkings) {
-      const rawData = {}
 
-      // Group values by m-period
-      const baseId = new Date().getTime()
-      onstreetParkings.forEach((parking) => {
-        // Exclude unsupported types of forecasts
-        if (
-          parking.tname.startsWith('parking-forecast-low') ||
-          parking.tname.startsWith('parking-forecast-high') ||
-          parking.tname.startsWith('parking-forecast-rmse')
-        ) {
-          return true
-        }
-
-        const parkingId = baseId + '-' + parking.smetadata.group
-
-        if (!rawData[parkingId]) {
-          rawData[parkingId] = { ...parking }
-          rawData[parkingId].id = parkingId
-          rawData[parkingId].smetadata.capacity = 0
-          rawData[parkingId].smetadata.standard_name = parking.smetadata.group
-          rawData[parkingId].sname = parking.smetadata.group
-        }
-
-        rawData[parkingId].mvalue += Math.round(parking.mvalue)
-
-        rawData[parkingId].smetadata.capacity += 1
-      })
-
-      return Object.values(rawData)
-    },
     bindDragEvents() {
       const locationsGrip = this.$refs.locationsGrip
       locationsGrip.addEventListener(
@@ -747,14 +737,6 @@ export default {
       this.dragInfo.initialY = null
       this.dragInfo.xOffset = 0
       this.dragInfo.yOffset = 0
-    },
-
-    handleZoomUpdate(newZoom) {
-      if (newZoom > 14) {
-        this.groupStreetParkings = false
-      } else {
-        this.groupStreetParkings = true
-      }
     },
   },
 }

@@ -84,6 +84,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script>
+'use strict'
 import utils from '~/mixins/utils'
 
 export default {
@@ -111,8 +112,8 @@ export default {
     name() {
       return (
         this.data.smetadata?.standard_name ||
-        this.data.smetadata?.group ||
         this.data.sname ||
+        this.data.smetadata?.group ||
         this.data.smetadata?.municipality ||
         this.$t('common.parking')
       )

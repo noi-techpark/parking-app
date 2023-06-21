@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
 <script>
+'use strict'
 /**
  * @see https://webpack.js.org/api/module-methods/#requirecontext
  * @see https://webpack.js.org/concepts/loaders/#inline

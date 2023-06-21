@@ -44,6 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script>
+'use strict'
 import Vue from 'vue'
 import VueLayers from 'vuelayers'
 import 'vuelayers/dist/vuelayers.css'
@@ -287,14 +288,6 @@ export default {
 
     zoomUpdate(newZoom) {
       this.$emit('zoomUpdate', newZoom)
-    },
-
-    getParkingAvailability(parkingData) {
-      if (parkingData.stype === 'OfflineParking') {
-        return 'P'
-      }
-
-      return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
     },
   },
 }

@@ -36,6 +36,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script>
+'use strict'
 import utils from '~/mixins/utils'
 
 export default {
@@ -61,7 +62,7 @@ export default {
 
   computed: {
     name() {
-      return this.data.smetadata?.standard_name || this.data.sname
+      return this.data.smetadata?.standard_name || this.data.smetadata?.group  || this.data.sname
     },
 
     timestamp() {
