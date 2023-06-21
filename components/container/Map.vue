@@ -240,14 +240,15 @@ export default {
           if (item) {
             this.clickedMarker(item)
           }
-        } else {
+        } 
+        // else {
           // to fix center, projection needs somehow to be changed or converted from EPSG:3857 to EPSG:4326
           // https://epsg.io/transform#s_srs=3857&t_srs=4326&x=NaN&y=NaN
-          mapData.map.getView().animate({
-            zoom: this.zoom + 2,
-            duration: 600,
-          })
-        }
+          // mapData.map.getView().animate({
+          //   zoom: this.zoom + 2,
+          //   duration: 600,
+          // })
+        // }
       })
     },
 
