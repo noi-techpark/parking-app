@@ -335,7 +335,7 @@ export default {
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.free)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime'
       ).catch((error) => {
         this.handleError(error)
       })
@@ -433,30 +433,22 @@ export default {
       if (this.parkingStations?.data) {
         data = [
           ...data,
-          ...this.normalizeParkingDataset(this.parkingStations?.data, true),
+          ...this.normalizeParkingDataset(this.parkingStations?.data),
         ]
         zoomedData = [
           ...zoomedData,
-          ...this.normalizeParkingDataset(
-            this.parkingStations?.data,
-            true,
-            true
-          ),
+          ...this.normalizeParkingDataset(this.parkingStations?.data),
         ]
       }
 
       if (this.onStreetParkings?.data) {
         data = [
           ...data,
-          ...this.normalizeParkingDataset(this.onStreetParkings?.data, true),
+          ...this.normalizeParkingDataset(this.onStreetParkings?.data),
         ]
         zoomedData = [
           ...zoomedData,
-          ...this.normalizeParkingDataset(
-            this.onStreetParkings?.data,
-            true,
-            true
-          ),
+          ...this.normalizeParkingDataset(this.onStreetParkings?.data),
         ]
       }
 
@@ -521,7 +513,7 @@ export default {
       // TODO: add here redirect
     },
 
-    normalizeParkingDataset(dataset, forMapData, groupStreetParkings) {
+    normalizeParkingDataset(dataset) {
       const rawData = {}
 
       // Group values by m-period
@@ -529,7 +521,6 @@ export default {
       dataset.forEach((parking) => {
         // Exclude unsupported types of forecasts
         if (
-          parking.tname === 'free' ||
           parking.tname.startsWith('parking-forecast-low') ||
           parking.tname.startsWith('parking-forecast-high') ||
           parking.tname.startsWith('parking-forecast-rmse')
@@ -537,45 +528,22 @@ export default {
           return true
         }
 
-        const doGrouping =
-          forMapData &&
-          groupStreetParkings &&
-          parking.stype === 'ParkingSensor' &&
-          typeof parking.smetadata.group !== 'undefined'
-
-        let parkingId = null
-        if (doGrouping) {
-          parkingId = baseId + '-' + parking.smetadata.group
-        } else {
-          parkingId =
-            baseId +
-            '-' +
-            parking.sname +
-            '_' +
-            parking.scoordinate.x +
-            '_' +
-            parking.scoordinate.y
-        }
+        const parkingId =
+          baseId +
+          '-' +
+          parking.sname +
+          '_' +
+          parking.scoordinate.x +
+          '_' +
+          parking.scoordinate.y
 
         if (!rawData[parkingId]) {
           rawData[parkingId] = { ...parking }
           rawData[parkingId].id = parkingId
           rawData[parkingId].forecast = []
-
-          if (doGrouping) {
-            rawData[parkingId].smetadata.capacity = 0
-          }
         }
 
-        if (doGrouping) {
-          rawData[parkingId].mperiod = rawData[parkingId].mperiod +=
-            parking.mperiod
-          rawData[parkingId].mvalue = rawData[parkingId].mvalue += Math.round(
-            parking.mvalue
-          )
-
-          rawData[parkingId].smetadata.capacity += 1
-        } else if (rawData[parkingId].mperiod >= parking.mperiod) {
+        if (rawData[parkingId].mperiod >= parking.mperiod) {
           rawData[parkingId].mperiod = parking.mperiod
           rawData[parkingId].mvalue = Math.round(parking.mvalue)
         }
@@ -627,7 +595,38 @@ export default {
 
       return parkings
     },
+    groupOnStreetParkings(onstreetParkings) {
+      const rawData = {}
 
+      // Group values by m-period
+      const baseId = new Date().getTime()
+      onstreetParkings.forEach((parking) => {
+        // Exclude unsupported types of forecasts
+        if (
+          parking.tname.startsWith('parking-forecast-low') ||
+          parking.tname.startsWith('parking-forecast-high') ||
+          parking.tname.startsWith('parking-forecast-rmse')
+        ) {
+          return true
+        }
+
+        const parkingId = baseId + '-' + parking.smetadata.group
+
+        if (!rawData[parkingId]) {
+          rawData[parkingId] = { ...parking }
+          rawData[parkingId].id = parkingId
+          rawData[parkingId].smetadata.capacity = 0
+          rawData[parkingId].smetadata.standard_name = parking.smetadata.group
+          rawData[parkingId].sname = parking.smetadata.group
+        }
+
+        rawData[parkingId].mvalue += Math.round(parking.mvalue)
+
+        rawData[parkingId].smetadata.capacity += 1
+      })
+
+      return Object.values(rawData)
+    },
     bindDragEvents() {
       const locationsGrip = this.$refs.locationsGrip
       locationsGrip.addEventListener(
