@@ -325,21 +325,21 @@ export default {
   methods: {
     async fetchData() {
       const parkingStations = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
       this.onStreetParkings = await onStreetParkings.json()
 
       const offlineParkings = await fetch(
-        'https://tourism.opendatahub.com/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000&removenullvalues=true&fields=Detail,GpsInfo'
+        'https://tourism.opendatahub.com/v1/Poi?pagenumber=1&poitype=64&subtype=2&pagesize=1000&removenullvalues=true&fields=Detail,GpsInfo&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })

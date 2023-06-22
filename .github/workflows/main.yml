@@ -41,6 +41,11 @@ jobs:
           region: ${{ env.AWS_REGION }}
           s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
           folder: ./dist
+      
+      - name: Test Webcomponent
+        uses: noi-techpark/github-actions/webcomp-test@v2
+        with:
+          origin-test-directory: components
 
   # https://parking.opendatahub.com
   # https://parking.bz.it
