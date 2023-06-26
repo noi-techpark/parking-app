@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
 SPDX-License-Identifier: CC0-1.0
 -->
 
-# Bolzano Parking App
+# Parking App
 
 ![REUSE Compliance Check](https://github.com/noi-techpark/parking-app/actions/workflows/reuse.yml/badge.svg)
 
