@@ -457,14 +457,6 @@ export default {
       nonRealTimeParkingcard.sort(sorter);
       nonRealTimeParkingcard.reverse();
       this.parkingCards.push(...nonRealTimeParkingcard);
-      
-      // now this.parkingCards is sorted in the right way but with wrong datas
-      // in the array from 0 to 29 are the realTime parkings
-      // and from 30 to 33 are the non real time parkings
-
-      for(let i = 0; i < this.parkingCards.length; i++){      
-        console.log(i + ": " + (this.parkingCards[i].smetadata?.capacity - this.parkingCards[i].mvalue));
-      }  
     },
 
     constructMapData() {
