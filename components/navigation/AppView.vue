@@ -325,14 +325,14 @@ export default {
   methods: {
     async fetchData() {
       const parkingStations = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/occupied/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/occupied/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
@@ -423,6 +423,7 @@ export default {
 
       // sort for mvalidtime to have not real time parking information at last
 
+
       const realTimeParkingcard = [];
       const nonRealTimeParkingcard = [];
       
@@ -457,6 +458,7 @@ export default {
       nonRealTimeParkingcard.sort(sorter);
       nonRealTimeParkingcard.reverse();
       this.parkingCards.push(...nonRealTimeParkingcard);
+
     },
 
     constructMapData() {
