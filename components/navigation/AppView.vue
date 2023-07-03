@@ -325,14 +325,14 @@ export default {
   methods: {
     async fetchData() {
       const parkingStations = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/occupied/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/occupied/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
@@ -422,7 +422,49 @@ export default {
       this.offlineParkingCards = offlineParkings
 
       // sort for mvalidtime to have not real time parking information at last
-      // this.parkingCards.sort((a, b) => a.mvalidtime < b.mvalidtime)
+
+      const realTimeParkingcard = [];
+      const nonRealTimeParkingcard = [];
+      
+      function compareDates(inputDate) {
+        const nonRealTimeValue = 6;
+        const inputDateTime = new Date(inputDate);
+        const currentDateTime = new Date();
+        const timeDifference = Math.abs(currentDateTime - inputDateTime) / (1000 * 60 * 60);
+
+        return timeDifference <= nonRealTimeValue;
+      }
+      this.parkingCards.forEach((i) => {
+        if (compareDates(i.mvalidtime)) {
+          realTimeParkingcard.push(i);
+        } else {
+          nonRealTimeParkingcard.push(i);
+        }
+      });
+
+      this.parkingCards = []; 
+
+      const sorter = (a, b) => {
+        const aValue = a.smetadata?.capacity - a.mvalue;
+        const bValue = b.smetadata?.capacity - b.mvalue;
+        return aValue - bValue;
+      };
+      
+      realTimeParkingcard.sort(sorter);
+      realTimeParkingcard.reverse();
+      this.parkingCards.push(...realTimeParkingcard);
+
+      nonRealTimeParkingcard.sort(sorter);
+      nonRealTimeParkingcard.reverse();
+      this.parkingCards.push(...nonRealTimeParkingcard);
+      
+      // now this.parkingCards is sorted in the right way but with wrong datas
+      // in the array from 0 to 29 are the realTime parkings
+      // and from 30 to 33 are the non real time parkings
+
+      for(let i = 0; i < this.parkingCards.length; i++){      
+        console.log(i + ": " + (this.parkingCards[i].smetadata?.capacity - this.parkingCards[i].mvalue));
+      }  
     },
 
     constructMapData() {
