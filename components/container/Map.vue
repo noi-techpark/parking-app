@@ -31,7 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       ></vl-view>
 
       <vl-layer-tile id="osm">
-        <vl-source-osm></vl-source-osm>
+        <vl-source-osm attributions="<a href='https://opendatahub.com' target='_blank'>OpenDataHub.com</a> | &copy <a href='https://www.openstreetmap.org/copyright' target='_blank'>OpenStreetMap</a> contributors."></vl-source-osm>
       </vl-layer-tile>
       <vl-layer-vector>
         <vl-source-cluster :distance="40">
@@ -240,14 +240,14 @@ export default {
           if (item) {
             this.clickedMarker(item)
           }
-        } 
+        }
         // else {
-          // to fix center, projection needs somehow to be changed or converted from EPSG:3857 to EPSG:4326
-          // https://epsg.io/transform#s_srs=3857&t_srs=4326&x=NaN&y=NaN
-          // mapData.map.getView().animate({
-          //   zoom: this.zoom + 2,
-          //   duration: 600,
-          // })
+        // to fix center, projection needs somehow to be changed or converted from EPSG:3857 to EPSG:4326
+        // https://epsg.io/transform#s_srs=3857&t_srs=4326&x=NaN&y=NaN
+        // mapData.map.getView().animate({
+        //   zoom: this.zoom + 2,
+        //   duration: 600,
+        // })
         // }
       })
     },
