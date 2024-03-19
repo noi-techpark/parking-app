@@ -23,11 +23,10 @@
   ],
   "image": "wcs-logo.png",
   "searchTags": [
-    "parking",
     "mobility",
     "map",
     "real time",
-    "predictions"
+    "forecast"
   ],
   "dist": {
     "basePath": "dist/nuxt-custom-elements/bolzano-parking-app",
