@@ -246,7 +246,6 @@ export default {
         (card) =>
           card.smetadata?.municipality ===
           this.currentLocationData.municipalityId
-          || card.scode == 'parking-bz:8:0'
       )
     },
 
@@ -427,7 +426,7 @@ export default {
 
       const realTimeParkingcard = [];
       const nonRealTimeParkingcard = [];
-
+      
       function compareDates(inputDate) {
         const nonRealTimeValue = 6;
         const inputDateTime = new Date(inputDate);
@@ -444,14 +443,14 @@ export default {
         }
       });
 
-      this.parkingCards = [];
+      this.parkingCards = []; 
 
       const sorter = (a, b) => {
         const aValue = a.smetadata?.capacity - a.mvalue;
         const bValue = b.smetadata?.capacity - b.mvalue;
         return aValue - bValue;
       };
-
+      
       realTimeParkingcard.sort(sorter);
       realTimeParkingcard.reverse();
       this.parkingCards.push(...realTimeParkingcard);
