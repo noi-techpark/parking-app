@@ -219,6 +219,24 @@ export default {
           },
           'Trento'
         ),
+        this.getTabDataBlock(
+          'bressanone',
+          this.$t('places.bressanone'),
+          {
+            lat: 46.716401,
+            lng: 11.657792,
+          },
+          'Bressanone'
+        ),
+        this.getTabDataBlock(
+          'brunico',
+          this.$t('places.brunico'),
+          {
+            lat: 46.79636,
+            lng: 11.93553,
+          },
+          'Brunico'
+        ),
       ]
     },
 
@@ -423,42 +441,41 @@ export default {
 
       // sort for mvalidtime to have not real time parking information at last
 
+      const realTimeParkingcard = []
+      const nonRealTimeParkingcard = []
 
-      const realTimeParkingcard = [];
-      const nonRealTimeParkingcard = [];
-      
       function compareDates(inputDate) {
-        const nonRealTimeValue = 6;
-        const inputDateTime = new Date(inputDate);
-        const currentDateTime = new Date();
-        const timeDifference = Math.abs(currentDateTime - inputDateTime) / (1000 * 60 * 60);
+        const nonRealTimeValue = 6
+        const inputDateTime = new Date(inputDate)
+        const currentDateTime = new Date()
+        const timeDifference =
+          Math.abs(currentDateTime - inputDateTime) / (1000 * 60 * 60)
 
-        return timeDifference <= nonRealTimeValue;
+        return timeDifference <= nonRealTimeValue
       }
       this.parkingCards.forEach((i) => {
         if (compareDates(i.mvalidtime)) {
-          realTimeParkingcard.push(i);
+          realTimeParkingcard.push(i)
         } else {
-          nonRealTimeParkingcard.push(i);
+          nonRealTimeParkingcard.push(i)
         }
-      });
+      })
 
-      this.parkingCards = []; 
+      this.parkingCards = []
 
       const sorter = (a, b) => {
-        const aValue = a.smetadata?.capacity - a.mvalue;
-        const bValue = b.smetadata?.capacity - b.mvalue;
-        return aValue - bValue;
-      };
-      
-      realTimeParkingcard.sort(sorter);
-      realTimeParkingcard.reverse();
-      this.parkingCards.push(...realTimeParkingcard);
+        const aValue = a.smetadata?.capacity - a.mvalue
+        const bValue = b.smetadata?.capacity - b.mvalue
+        return aValue - bValue
+      }
 
-      nonRealTimeParkingcard.sort(sorter);
-      nonRealTimeParkingcard.reverse();
-      this.parkingCards.push(...nonRealTimeParkingcard);
+      realTimeParkingcard.sort(sorter)
+      realTimeParkingcard.reverse()
+      this.parkingCards.push(...realTimeParkingcard)
 
+      nonRealTimeParkingcard.sort(sorter)
+      nonRealTimeParkingcard.reverse()
+      this.parkingCards.push(...nonRealTimeParkingcard)
     },
 
     constructMapData() {

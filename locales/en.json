@@ -20,11 +20,12 @@
     "loading": "Loading",
     "poweredBy": "Powered by"
   },
-
   "places": {
     "bolzano": "Bolzano",
     "merano": "Merano",
     "rovereto": "Rovereto",
-    "trento": "Trento"
+    "trento": "Trento",
+    "bressanone": "Bressanone",
+    "brunico": "Brunico"
   }
 }
