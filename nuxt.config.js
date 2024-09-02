@@ -2,13 +2,13 @@
 //
 // SPDX-License-Identifier: CC0-1.0
 
-import i18nOptions from './plugins/i18n.options'
+import i18nOptions from './src/plugins/i18n.options'
 
 const matomo = process.env.MATOMO;
 
 let config = {
   ssr: false,
-
+  srcDir: 'src/',
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'Bolzano Parking App',

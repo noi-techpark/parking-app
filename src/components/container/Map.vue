@@ -227,28 +227,29 @@ export default {
       }
 
       feature.then((result) => {
-        const size = result.get('features').length
+        if(result) {
+          const size = result.get('features').length
+          if (size === 1) {
+            // single marker clicked => show detail
+            result = result.get('features')[0]
+            const item = this.points.find(
+              (marker) =>
+                this.getLocationId(marker.lat, marker.lng) === result.id_
+            )
 
-        if (size === 1) {
-          // single marker clicked => show detail
-          result = result.get('features')[0]
-          const item = this.points.find(
-            (marker) =>
-              this.getLocationId(marker.lat, marker.lng) === result.id_
-          )
-
-          if (item) {
-            this.clickedMarker(item)
+            if (item) {
+              this.clickedMarker(item)
+            }
           }
+          // else {
+          // to fix center, projection needs somehow to be changed or converted from EPSG:3857 to EPSG:4326
+          // https://epsg.io/transform#s_srs=3857&t_srs=4326&x=NaN&y=NaN
+          // mapData.map.getView().animate({
+          //   zoom: this.zoom + 2,
+          //   duration: 600,
+          // })
+          // }
         }
-        // else {
-        // to fix center, projection needs somehow to be changed or converted from EPSG:3857 to EPSG:4326
-        // https://epsg.io/transform#s_srs=3857&t_srs=4326&x=NaN&y=NaN
-        // mapData.map.getView().animate({
-        //   zoom: this.zoom + 2,
-        //   duration: 600,
-        // })
-        // }
       })
     },
 

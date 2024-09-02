@@ -10,7 +10,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
       - name: REUSE Compliance Check
@@ -41,7 +41,7 @@ jobs:
           region: ${{ env.AWS_REGION }}
           s3-bucket-name: ${{ env.AWS_S3_BUCKET_NAME }}
           folder: ./dist
-      
+
       - name: Test Webcomponent
         uses: noi-techpark/github-actions/webcomp-test@v2
         with:
@@ -75,7 +75,7 @@ jobs:
 
   # webcomponent
   deploy-webcomponent-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'
     needs: test
     concurrency: deploy-webcomponent-test
@@ -94,7 +94,7 @@ jobs:
           version-tag: ${{github.sha}}
 
   deploy-webcomponent-prod:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
     concurrency: deploy-webcomponent-prod
