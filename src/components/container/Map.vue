@@ -26,6 +26,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
     >
       <vl-view
         :zoom.sync="zoom"
+        :maxZoom="this.maxZoom"
         :center.sync="curCenter"
         :rotation.sync="rotation"
       ></vl-view>
@@ -93,6 +94,7 @@ export default {
       DEFAULT_CONFIG: {
         ROTATION: 0,
       },
+      maxZoom: 20,
       zoom: 14,
       isMounted: false,
       curCenter: [11.3536166, 46.4981249],
@@ -102,6 +104,26 @@ export default {
 
   computed: {
     features() {
+      // save coordinates of points to find points that are on the same coordinate
+      const pointsByLocation = {}
+      this.points.forEach((p) => {
+        const key = p.lat + "-" + p.lng
+        if(!(key in pointsByLocation)) {
+          pointsByLocation[key] = []
+        }
+        pointsByLocation[key].push(p)
+      })
+
+      // then move markers to "edge of a cirlce" instead of having them on the same coordinate
+      for (const value of Object.values(pointsByLocation)) {
+        if(value.length > 1) {
+          const circlePoints = this.generatePointsCircle(value.length, value[0].geometry.coordinates)
+          value.forEach((feature, i) => {
+            feature.geometry.coordinates[0] = circlePoints[i][0]
+            feature.geometry.coordinates[1] = circlePoints[i][1]
+          })
+        }
+      }
       return Object.freeze(this.points)
     },
 
@@ -144,51 +166,55 @@ export default {
 
       const size = feature.get('features').length
 
-      if (size === 1) {
-        feature = feature.get('features')[0]
-        const baseStyle = new Style({
-          image:
-            feature.values_?.stype === 'ParkingSensor'
-              ? new RegularShape({
-                  points: 4,
-                  radius: 25 / Math.SQRT2,
-                  radius2: 25,
-                  angle: 0,
-                  scale: [1, 0.5],
-                  fill: new Fill({
-                    color: feature.values_.color,
+      if (size === 1 || this.zoom >= this.maxZoom) {
+        const features = feature.get('features')
+        const styles = []
+        features.forEach((feature, i) => {
+          const baseStyle = new Style({
+            image:
+              feature.values_?.stype === 'ParkingSensor'
+                ? new RegularShape({
+                    points: 4,
+                    radius: 25 / Math.SQRT2,
+                    radius2: 25,
+                    angle: 0,
+                    scale: [1, 0.5],
+                    fill: new Fill({
+                      color: feature.values_.color,
+                    }),
+                    stroke: new Stroke({
+                      color: feature.values_.borderColor,
+                      width: 2,
+                    }),
+                  })
+                : new Circle({
+                    radius: feature.values_?.stype ? 12 : 4,
+                    fill: new Fill({
+                      color:
+                        feature.values_?.color ||
+                        fullTailwindConfig.theme.colors['primary-hover'],
+                    }),
+                    stroke: new Stroke({
+                      color:
+                        feature.values_?.borderColor ||
+                        fullTailwindConfig.theme.colors.primary,
+                      width: 2,
+                    }),
                   }),
-                  stroke: new Stroke({
-                    color: feature.values_.borderColor,
-                    width: 2,
-                  }),
-                })
-              : new Circle({
-                  radius: feature.values_?.stype ? 12 : 4,
-                  fill: new Fill({
-                    color:
-                      feature.values_?.color ||
-                      fullTailwindConfig.theme.colors['primary-hover'],
-                  }),
-                  stroke: new Stroke({
-                    color:
-                      feature.values_?.borderColor ||
-                      fullTailwindConfig.theme.colors.primary,
-                    width: 2,
-                  }),
-                }),
-          text: new Text({
-            text: feature.values_?.text || '',
-            fill: new Fill({
-              color:
-                feature.values_?.textColor ||
-                fullTailwindConfig.theme.colors['primary-text'],
+            text: new Text({
+              text: feature.values_?.text || '',
+              fill: new Fill({
+                color:
+                  feature.values_?.textColor ||
+                  fullTailwindConfig.theme.colors['primary-text'],
+              }),
+              textAlign: 'center',
             }),
-            textAlign: 'center',
-          }),
-          zIndex: this.curFeatureIndex,
+            zIndex: this.curFeatureIndex,
+          })
+          styles.push(baseStyle)
         })
-        return [baseStyle]
+        return styles
       } else {
         // from https://github.com/ghettovoice/vuelayers-demo/blob/8195bff514de8a99ec16cab5f43118499e428726/src/components/Map.vue#L681
         const cache = {}
@@ -287,7 +313,30 @@ export default {
 
       return 'green'
     },
+    // used to create "cirlce of markers" on map,
+    // if multiple markers are on the exact same location
+    // from analytics.opendatahub.com
+    generatePointsCircle(count, centerCoords) {
+      if(count < 2) {
+        return centerCoords
+      }
+      const points = []
+      const separation = 0.00005
+      const twoPi = Math.PI * 2
+      const startAngle = twoPi / 12
+      const circumference = separation * (2 + count)
+      const legLength = circumference / twoPi  // radius from circumference
+      const angleStep = twoPi / count
 
+      for (let i = 0; i < count; i++) {
+        const angle = startAngle + i * angleStep;
+        points.push([
+          centerCoords[0] + legLength * Math.cos(angle),
+          centerCoords[1] + legLength * Math.sin(angle)
+        ])
+      }
+      return points
+    },
     zoomUpdate(newZoom) {
       this.$emit('zoomUpdate', newZoom)
     },
