@@ -234,7 +234,7 @@ export default {
             result = result.get('features')[0]
             const item = this.points.find(
               (marker) =>
-                this.getLocationId(marker.lat, marker.lng) === result.id_
+                marker.id === result.id_
             )
 
             if (item) {

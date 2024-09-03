@@ -4,10 +4,6 @@
 
 export default {
   methods: {
-    getLocationId(lat, lng) {
-      return lat + '-' + lng
-    },
-
     getSimpleMapLocationPointDataBlock(coordinates) {
       return {
         id: coordinates?.y + '-' + coordinates?.x,
