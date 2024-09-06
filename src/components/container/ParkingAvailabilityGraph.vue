@@ -88,7 +88,7 @@ export default {
 
     labels() {
       return this.values.map(
-        (value) => '+' + Math.round(value.mperiod / 60) + this.$t('common.min')
+        (value) => '+' + (value.mperiod === 300 ? 0 : Math.round(value.mperiod / 60)) + this.$t('common.min')
       )
     },
 

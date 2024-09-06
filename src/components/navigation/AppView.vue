@@ -593,7 +593,7 @@ export default {
             rawData[parkingId].mvalue = 1 - Math.round(parking.mvalue)
           else rawData[parkingId].mvalue = Math.round(parking.mvalue)
         }
-        if (parking.mperiod !== 300 || parking.ttype === 'Instantaneous') {
+        if(parking.ttype === 'Forecast') {
           rawData[parkingId].forecast.push({
             mperiod: parking.mperiod,
             mvalue:
@@ -601,10 +601,17 @@ export default {
               Math.round(parking.mvalue),
           })
         }
+        else if (parking.ttype === 'Instantaneous' && parking.tname === 'free') {
+          rawData[parkingId].forecast.push({
+            mperiod: parking.mperiod,
+            mvalue: Math.round(parking.mvalue),
+          })
+        }
 
         rawData[parkingId].forecast = rawData[parkingId].forecast.sort(
           (a, b) => a.mperiod - b.mperiod
         )
+        console.log(rawData[parkingId].forecast)
       })
 
       return Object.values(rawData)
