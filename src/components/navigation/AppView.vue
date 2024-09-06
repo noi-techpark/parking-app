@@ -611,7 +611,6 @@ export default {
         rawData[parkingId].forecast = rawData[parkingId].forecast.sort(
           (a, b) => a.mperiod - b.mperiod
         )
-        console.log(rawData[parkingId].forecast)
       })
 
       return Object.values(rawData)

@@ -127,8 +127,6 @@ let config = {
 // set env var 'MATOMO = true' to enable matomo for websites
 // keep deactivated for webcomponents
 if (matomo && matomo === 'true') {
-  console.log("MATOMO ENABLED");
-  console.log(matomo);
   config.head.link.push({ rel: 'stylesheet', href: 'https://scripts.opendatahub.com/cookieconsent/opendatahub/cookieconsent.css' });
   config.head.script = [];
   config.head.script.push({ body: true, type: 'text/javascript', src: 'https://scripts.opendatahub.com/cookieconsent/cookieconsent.js' });
