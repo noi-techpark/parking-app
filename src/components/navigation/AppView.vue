@@ -464,9 +464,7 @@ export default {
       this.parkingCards = []
 
       const sorter = (a, b) => {
-        const aValue = a.smetadata?.capacity - a.mvalue
-        const bValue = b.smetadata?.capacity - b.mvalue
-        return aValue - bValue
+        return a.mvalue - b.mvalue
       }
 
       realTimeParkingcard.sort(sorter)
@@ -585,14 +583,6 @@ export default {
           rawData[parkingId].forecast = []
         }
 
-        if (rawData[parkingId].mperiod >= parking.mperiod) {
-          rawData[parkingId].mperiod = parking.mperiod
-
-          // we use occupied datatype, so to get free slots: 1 - occupied slots
-          if (parking.stype === 'ParkingSensor')
-            rawData[parkingId].mvalue = 1 - Math.round(parking.mvalue)
-          else rawData[parkingId].mvalue = Math.round(parking.mvalue)
-        }
         if(parking.ttype === 'Forecast') {
           rawData[parkingId].forecast.push({
             mperiod: parking.mperiod,
@@ -602,10 +592,19 @@ export default {
           })
         }
         else if (parking.ttype === 'Instantaneous' && parking.tname === 'free') {
+          // save current mvalue as first value in forecasts array
           rawData[parkingId].forecast.push({
             mperiod: parking.mperiod,
             mvalue: Math.round(parking.mvalue),
           })
+
+          // save actual mvalue
+          rawData[parkingId].mperiod = parking.mperiod
+
+          // we use occupied datatype, so to get free slots: 1 - occupied slots
+          if (parking.stype === 'ParkingSensor')
+            rawData[parkingId].mvalue = 1 - Math.round(parking.mvalue)
+          else rawData[parkingId].mvalue = Math.round(parking.mvalue)
         }
 
         rawData[parkingId].forecast = rawData[parkingId].forecast.sort(

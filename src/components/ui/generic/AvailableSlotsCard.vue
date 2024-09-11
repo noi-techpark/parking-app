@@ -23,7 +23,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 'use strict'
 export default {
   props: {
-    occupied: {
+    free: {
       type: Number,
       required: true,
       default: 0,
@@ -42,7 +42,7 @@ export default {
 
   computed: {
     available() {
-      return this.total - this.occupied
+      return this.free
     },
     realTime() {
       const referenceDate = new Date()
