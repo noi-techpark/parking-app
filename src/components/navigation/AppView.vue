@@ -601,7 +601,6 @@ export default {
           // save actual mvalue
           rawData[parkingId].mperiod = parking.mperiod
 
-          // we use occupied datatype, so to get free slots: 1 - occupied slots
           if (parking.stype === 'ParkingSensor')
             rawData[parkingId].mvalue = 1 - Math.round(parking.mvalue)
           else rawData[parkingId].mvalue = Math.round(parking.mvalue)

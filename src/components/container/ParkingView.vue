@@ -56,7 +56,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <AvailableSlotsBadge
         v-else
         :total="totalCapacity"
-        :occupied="data.mvalue"
+        :free="data.mvalue"
       />
     </div>
     <div v-if="data.stype === 'ParkingStation'" class="graph-ct">
