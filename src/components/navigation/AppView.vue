@@ -237,6 +237,15 @@ export default {
           },
           'Brunico'
         ),
+        this.getTabDataBlock(
+          'marlengo',
+          this.$t('places.marlengo'),
+          {
+            lat: 46.6767,
+            lng: 11.1167,
+          },
+          'Marling - Marlengo'
+        )
       ]
     },
 
@@ -343,14 +352,14 @@ export default {
   methods: {
     async fetchData() {
       const parkingStations = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.com//v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com/v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.com//v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
