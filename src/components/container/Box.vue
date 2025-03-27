@@ -37,7 +37,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 'use strict'
 export default {
   props: {
-    /** @values default, compact */
+    /** @values default, compactt */
     aspect: {
       type: String,
       default: 'default',
