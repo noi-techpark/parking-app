@@ -577,6 +577,12 @@ export default {
           return true
         }
 
+        // Super hotfix to exclude old laurin data which had period 300, now we have period 600.
+        // This leads to 2 timesieries for laurin and the application choses the first one (the one discontinued)
+        if (parking.scode === "105" && parking.mperiod === 300) {
+          return true;
+        }
+
         const parkingId =
           baseId +
           '-' +
