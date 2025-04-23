@@ -23,7 +23,7 @@ jobs:
 
   # https://parking.opendatahub.testingmachine.eu
   deploy-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'
     needs: test
     concurrency: deploy-test
@@ -49,7 +49,7 @@ jobs:
   # https://parking.opendatahub.com
   # https://parking.bz.it
   deploy-prod:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/prod'
     needs: test
     concurrency: deploy-prod
