@@ -245,6 +245,15 @@ export default {
             lng: 11.1167,
           },
           'Marling - Marlengo'
+        ),
+        this.getTabDataBlock(
+          'gardena',
+          this.$t('places.gardena'),
+          {
+            lat: 46.57369,
+            lng: 11.671219,
+          },
+          'Gardena'
         )
       ]
     },
@@ -352,14 +361,14 @@ export default {
   methods: {
     async fetchData() {
       const parkingStations = await fetch(
-        'https://mobility.api.opendatahub.com//v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.testingmachine.eu//v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
       this.parkingStations = await parkingStations.json()
 
       const onStreetParkings = await fetch(
-        'https://mobility.api.opendatahub.com//v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        'https://mobility.api.opendatahub.testingmachine.eu//v2/flat,node/ParkingSensor/*/latest?limit=-1&where=and(sactive.eq.true,tname.eq.occupied)&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
@@ -381,27 +390,27 @@ export default {
     getParkingIconColors(parkingData) {
       let color = fullTailwindConfig.theme.colors.green
       let borderColor = fullTailwindConfig.theme.colors['green-hover']
-      const textColor = '#FFFF'
+      let textColor = fullTailwindConfig.theme.colors["light-black"]
 
       if (parkingData.stype === 'OfflineParking') {
         color = fullTailwindConfig.theme.colors.primary
         borderColor = fullTailwindConfig.theme.colors['primary-hover']
-        // textColor = fullTailwindConfig.theme.colors['primary-text']
+        textColor = "#FFFF"
       }
 
       const total = parkingData.smetadata?.capacity || 1
-      const available = total - parkingData.mvalue
+      const available = parkingData.mvalue
 
       if (available / total >= 0.2 && available / total < 0.5) {
         color = fullTailwindConfig.theme.colors.orange
         borderColor = fullTailwindConfig.theme.colors['orange-hover']
-        // textColor = fullTailwindConfig.theme.colors['primary-text']
+        textColor = "#FFFF"
       }
 
       if (available === 0 || available / total < 0.2) {
         color = fullTailwindConfig.theme.colors.red
         borderColor = fullTailwindConfig.theme.colors['red-hover']
-        // textColor = fullTailwindConfig.theme.colors['primary-text']
+        textColor = "#FFFF"
       }
 
       return {
@@ -415,7 +424,7 @@ export default {
       if (parkingData.stype === 'OfflineParking') {
         return 'P'
       }
-      return String((parkingData.smetadata?.capacity || 1) - parkingData.mvalue)
+      return String(parkingData.mvalue)
     },
 
     constructData() {

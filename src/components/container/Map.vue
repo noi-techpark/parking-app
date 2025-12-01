@@ -295,24 +295,6 @@ export default {
       vlMap.refresh()
     },
 
-    getParkingIconColor(parkingData) {
-      if (parkingData.stype === 'OfflineParking') {
-        return 'blue'
-      }
-
-      const total = parkingData.smetadata?.capacity || 1
-      const available = total - parkingData.mvalue
-
-      if (available / total >= 0.2 && available / total < 0.5) {
-        return 'orange'
-      }
-
-      if (available === 0 || available / total < 0.2) {
-        return 'red'
-      }
-
-      return 'green'
-    },
     // used to create "cirlce of markers" on map,
     // if multiple markers are on the exact same location
     // from analytics.opendatahub.com
