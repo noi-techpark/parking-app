@@ -280,8 +280,8 @@ export default {
     visibleParkingCards() {
       return this.parkingCards.filter(
         (card) =>
-          card.smetadata?.municipality ===
-          this.currentLocationData.municipalityId
+          card.smetadata?.municipality?.toLowerCase() ===
+          this.currentLocationData.municipalityId.toLowerCase()
       )
     },
 
