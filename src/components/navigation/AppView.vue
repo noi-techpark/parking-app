@@ -278,6 +278,8 @@ export default {
     },
 
     visibleParkingCards() {
+      // TODO using municipalityId is too strict, not all parking station/sensor use the municipality
+      // as defined in the en.json. 
       return this.parkingCards.filter(
         (card) =>
           card.smetadata?.municipality?.toLowerCase() ===
