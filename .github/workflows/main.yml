@@ -30,6 +30,7 @@ jobs:
     env:
       AWS_S3_BUCKET_NAME: 'com.opendatahub.parking-test'
       MATOMO: true
+      ENVIRONMENT: test
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 

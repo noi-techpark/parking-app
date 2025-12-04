@@ -26,6 +26,9 @@ let config = {
     ]
   },
 
+  env: {
+    ENVIRONMENT: process.env.ENVIRONMENT
+  },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [],
