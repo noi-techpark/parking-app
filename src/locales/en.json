@@ -1,5 +1,6 @@
 {
   "common": {
+    "availabilityUnknown": "Unknown Capacity",
     "freeSing": "Free",
     "freePlur": "Free",
     "occupied": "Full",
