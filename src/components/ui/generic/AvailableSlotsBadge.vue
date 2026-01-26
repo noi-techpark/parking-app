@@ -9,7 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
     :class="{
       'available-slots': true,
       orange: available / total >= 0.2 && available / total < 0.5,
-      red: available === 0 || available / total < 0.2,
+      red: available === 0 || total <= 0 || available / total < 0.2,
     }"
   >
     <span v-if="total > 1" class="count">
@@ -43,6 +43,11 @@ export default {
     },
 
     label() {
+
+    if (this.total <= 0) {
+    return this.$t('common.availabilityUnknown')
+    }
+
       if (this.total > 1) {
         return this.available === 1
           ? this.$t('common.freeSing')
