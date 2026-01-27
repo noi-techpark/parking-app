@@ -11,7 +11,7 @@ let config = {
   srcDir: 'src/',
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'Bolzano Parking App',
+    title: 'Real-Time Parking',
     htmlAttrs: {
       lang: 'en',
     },
