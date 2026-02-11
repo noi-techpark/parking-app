@@ -9,7 +9,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
     :class="{
       'available-slots': true,
       orange: available / total >= 0.2 && available / total < 0.5,
-      red: available === 0 || total <= 0 || available / total < 0.2,
+      gray: total <= 0 || total <= 1,
+      red: available === 0 || available / total < 0.2,
     }"
   >
     <span v-if="total > 1" class="count">
@@ -44,7 +45,8 @@ export default {
 
     label() {
 
-    if (this.total <= 0) {
+
+    if (this.total <= 1) {
     return this.$t('common.availabilityUnknown')
     }
 
@@ -68,7 +70,7 @@ export default {
 
   padding-top: 0.2rem;
   padding-bottom: 0.1rem;
-
+  margin-bottom: 1.25rem;
   & .count {
     @apply text-xl text-base;
   }

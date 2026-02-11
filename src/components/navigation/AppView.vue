@@ -247,13 +247,13 @@ export default {
           'Marling - Marlengo'
         ),
         this.getTabDataBlock(
-          'gardena',
-          this.$t('places.gardena'),
+          'valgardena',
+          this.$t('places.valgardena'),
           {
             lat: 46.57369,
             lng: 11.671219,
           },
-          'Gardena'
+          'ValGardena'
         )
       ]
     },
