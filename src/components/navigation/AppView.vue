@@ -615,6 +615,11 @@ export default {
           rawData[parkingId].forecast = []
         }
 
+        // Use the last timestamp as "Last Update"
+        if (new Date(rawData[parkingId].mvalidtime) < new Date(parking.mvalidtime)) {
+          rawData[parkingId].mvalidtime = parking.mvalidtime
+        }
+
         if(parking.ttype === 'Forecast') {
           rawData[parkingId].forecast.push({
             mperiod: parking.mperiod,
