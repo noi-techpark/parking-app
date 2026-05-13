@@ -254,6 +254,33 @@ export default {
             lng: 11.671219,
           },
           'ValGardena'
+        ),
+        this.getTabDataBlock(
+          'selvadivalgardena',
+          this.$t('places.selvadivalgardena'),
+          {
+            lat: 46.5222064231,
+            lng: 11.7632964171,
+          },
+          'Selva di Val Gardena'
+        ),
+        this.getTabDataBlock(
+          'lavilla',
+          this.$t('places.lavilla'),
+          {
+            lat: 46.5817507763,
+            lng: 11.9018682000,
+          },
+          'La Villa'
+        ),
+        this.getTabDataBlock(
+          'ortisei',
+          this.$t('places.ortisei'),
+          {
+            lat: 46.5767041102,
+            lng: 11.6753190552,
+          },
+          'Ortisei'
         )
       ]
     },
