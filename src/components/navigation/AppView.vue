@@ -199,7 +199,7 @@ export default {
             lat: 46.6756534,
             lng: 11.1579967,
           },
-          'Meran - Merano'
+          ['Meran - Merano', 'Merano - Meran']
         ),
         this.getTabDataBlock(
           'rovereto',
@@ -226,7 +226,7 @@ export default {
             lat: 46.716401,
             lng: 11.657792,
           },
-          'Bressanone'
+          ['Bressanone', 'Bressanone - Brixen']
         ),
         this.getTabDataBlock(
           'brunico',
@@ -235,7 +235,7 @@ export default {
             lat: 46.79636,
             lng: 11.93553,
           },
-          'Brunico'
+          ['Brunico', 'Brunico - Bruneck']
         ),
         this.getTabDataBlock(
           'marlengo',
@@ -254,6 +254,78 @@ export default {
             lng: 11.671219,
           },
           'ValGardena'
+        ),
+        this.getTabDataBlock(
+          'selvadivalgardena',
+          this.$t('places.selvadivalgardena'),
+          {
+            lat: 46.5222064231,
+            lng: 11.7632964171,
+          },
+          'Selva di Val Gardena'
+        ),
+        this.getTabDataBlock(
+          'lavilla',
+          this.$t('places.lavilla'),
+          {
+            lat: 46.5817507763,
+            lng: 11.9018682000,
+          },
+          'La Villa'
+        ),
+        this.getTabDataBlock(
+          'ortisei',
+          this.$t('places.ortisei'),
+          {
+            lat: 46.5767041102,
+            lng: 11.6753190552,
+          },
+          'Ortisei'
+        ),
+        this.getTabDataBlock(
+          'caldaro',
+          this.$t('places.caldaro'),
+          {
+            lat: 46.41276,
+            lng: 11.246,
+          },
+          'Caldaro - Kaltern'
+        ),
+        this.getTabDataBlock(
+          'curonvenosta',
+          this.$t('places.curonvenosta'),
+          {
+            lat: 46.8226778342,
+            lng: 10.5095065399,
+          },
+          'Curon Venosta - Graun im Vinschgau'
+        ),
+        this.getTabDataBlock(
+          'avelengo',
+          this.$t('places.avelengo'),
+          {
+            lat: 46.6646229949,
+            lng: 11.2396944754,
+          },
+          'Avelengo - Hafling'
+        ),
+        this.getTabDataBlock(
+          'senales',
+          this.$t('places.senales'),
+          {
+            lat: 46.75701,
+            lng: 10.78257,
+          },
+          'Senales - Schnals'
+        ),
+        this.getTabDataBlock(
+          'laion',
+          this.$t('places.laion'),
+          {
+            lat: 46.5999481154,
+            lng: 11.5320658113,
+          },
+          'Laion - Lajen'
         )
       ]
     },
@@ -278,13 +350,16 @@ export default {
     },
 
     visibleParkingCards() {
-      // TODO using municipalityId is too strict, not all parking station/sensor use the municipality
-      // as defined in the en.json. 
-      return this.parkingCards.filter(
-        (card) =>
-          card.smetadata?.municipality?.toLowerCase() ===
-          this.currentLocationData.municipalityId.toLowerCase()
+      // A tab can match several municipality spellings (aliases) because the
+      // same place is named differently across data origins. Stations without
+      // a municipality in their metadata still won't appear under any tab.
+      const municipalityIds = this.currentLocationData.municipalityIds.map(
+        (municipality) => municipality.toLowerCase()
       )
+      return this.parkingCards.filter((card) => {
+        const cardMunicipality = card.smetadata?.municipality?.toLowerCase()
+        return cardMunicipality && municipalityIds.includes(cardMunicipality)
+      })
     },
 
     mapCenter() {
@@ -537,12 +612,18 @@ export default {
       }
     },
 
-    getTabDataBlock(id, name, center, municipalityId, icon) {
+    getTabDataBlock(id, name, center, municipalityIds, icon) {
       return {
         id,
         name,
         center,
-        municipalityId,
+        // Accept a single municipality name or a list of aliases (the same
+        // place can be spelled differently across data origins).
+        municipalityIds: Array.isArray(municipalityIds)
+          ? municipalityIds
+          : municipalityIds
+          ? [municipalityIds]
+          : [],
         icon,
       }
     },
