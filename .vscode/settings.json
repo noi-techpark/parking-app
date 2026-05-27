@@ -1,0 +1,15 @@
+{
+    "yaml.schemas": {
+        "file:///home/mroggia/.vscode/extensions/noi-techpark.silky-vscode-0.1.0/schemas/silky-schema.json": [
+            "*.silky.yaml",
+            "*.silky.yml"
+        ]
+    },
+    "files.associations": {
+        "*.embeddedhtml": "html",
+        "*.quest": "lua",
+        "*.forge": "lua",
+        "*.silky.yaml": "yaml",
+        "*.silky.yml": "yaml"
+    }
+}
