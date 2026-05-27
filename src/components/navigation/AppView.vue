@@ -262,7 +262,7 @@ export default {
             lat: 46.5222064231,
             lng: 11.7632964171,
           },
-          'Selva di Val Gardena'
+          ['Selva di Val Gardena', 'Selva di Val Gardena - Wolkenstein in Gröden']
         ),
         this.getTabDataBlock(
           'lavilla',
@@ -280,7 +280,7 @@ export default {
             lat: 46.5767041102,
             lng: 11.6753190552,
           },
-          'Ortisei'
+          ['Ortisei', 'Ortisei - St. Ulrich']
         ),
         this.getTabDataBlock(
           'caldaro',
@@ -326,6 +326,42 @@ export default {
             lng: 11.5320658113,
           },
           'Laion - Lajen'
+        ),
+        this.getTabDataBlock(
+          'castelrotto',
+          this.$t('places.castelrotto'),
+          {
+            lat: 46.5678774236,
+            lng: 11.5612821714,
+          },
+          'Castelrotto - Kastelruth'
+        ),
+        this.getTabDataBlock(
+          'racines',
+          this.$t('places.racines'),
+          {
+            lat: 46.8642877761,
+            lng: 11.3088532446,
+          },
+          'Racines - Ratschings'
+        ),
+        this.getTabDataBlock(
+          'vipiteno',
+          this.$t('places.vipiteno'),
+          {
+            lat: 46.9054617600,
+            lng: 11.4299724133,
+          },
+          'Vipiteno - Sterzing'
+        ),
+        this.getTabDataBlock(
+          'lagundo',
+          this.$t('places.lagundo'),
+          {
+            lat: 46.6650255348,
+            lng: 11.0676335096,
+          },
+          'Lagundo - Algund'
         )
       ]
     },
