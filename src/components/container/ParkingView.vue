@@ -50,7 +50,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         </span>
       </p>
 
-      <div v-if="data.stype === 'OfflineParking'" class="status-info">
+      <div v-if="data.stype === 'OfflineParking' || data.invalidRealtime" class="status-info">
         {{ $t('common.notRealTime') }}
       </div>
       <AvailableSlotsBadge
