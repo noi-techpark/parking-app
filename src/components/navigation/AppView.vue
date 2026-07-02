@@ -394,7 +394,9 @@ export default {
       )
       return this.parkingCards.filter((card) => {
         const cardMunicipality = card.smetadata?.municipality?.toLowerCase()
-        return cardMunicipality && municipalityIds.includes(cardMunicipality)
+        if (!cardMunicipality || !municipalityIds.includes(cardMunicipality)) return false
+        if (this.currentParkingType === 'live' && card.invalidRealtime) return false
+        return true
       })
     },
 
@@ -436,6 +438,10 @@ export default {
 
     mapData() {
       let data = this.defaultMapData
+
+      if (this.currentParkingType === 'live') {
+        data = data.filter((card) => !card.invalidRealtime)
+      }
 
       if (this.currentParkingType === 'all') {
         data = [...data, ...this.offlineParkingCards]
@@ -480,7 +486,7 @@ export default {
         baseContentUrl = "https://content.api.opendatahub.testingmachine.eu"
       }
       const parkingStations = await fetch(
-        baseTimeseriesUrl + '/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,mvalidtime&origin=webcomp-parking-app'
+        baseTimeseriesUrl + '/v2/flat,node/ParkingStation/*/latest?limit=-1&where=sactive.eq.true&select=sname,scoordinate,scode,smetadata,sdatatypes,stype,sorigin,mvalidtime&origin=webcomp-parking-app'
       ).catch((error) => {
         this.handleError(error)
       })
@@ -515,6 +521,14 @@ export default {
         color = fullTailwindConfig.theme.colors.primary
         borderColor = fullTailwindConfig.theme.colors['primary-hover']
         textColor = "#FFFF"
+      }
+
+      if (parkingData.invalidRealtime) {
+        return {
+          color: fullTailwindConfig.theme.colors.grey,
+          borderColor: fullTailwindConfig.theme.colors.grey,
+          textColor: "#FFFF",
+        }
       }
 
       const total = parkingData.smetadata?.capacity || 1
@@ -591,7 +605,7 @@ export default {
         return timeDifference <= nonRealTimeValue
       }
       this.parkingCards.forEach((i) => {
-        if (compareDates(i.mvalidtime)) {
+        if (compareDates(i.mvalidtime) && !i.invalidRealtime) {
           realTimeParkingcard.push(i)
         } else {
           nonRealTimeParkingcard.push(i)
@@ -730,6 +744,9 @@ export default {
           rawData[parkingId] = { ...parking }
           rawData[parkingId].id = parkingId
           rawData[parkingId].forecast = []
+          rawData[parkingId].invalidRealtime =
+            parking.sorigin === 'skidata_dynamicdata' &&
+            (parking.smetadata?.capacity ?? 0) >= 9999
         }
 
         // Use the last timestamp as "Last Update"
