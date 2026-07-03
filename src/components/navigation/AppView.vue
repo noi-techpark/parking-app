@@ -126,13 +126,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 <script>
 'use strict'
+import resolveConfig from 'tailwindcss/resolveConfig'
 import vueI18n from '@/plugins/vueI18n'
+import tailwindConfig from '@/tailwind.config.js'
 import 'tailwindcss/tailwind.css'
 import '@/assets/css/animations.css'
 import '@/assets/css/main.css'
-
-import resolveConfig from 'tailwindcss/resolveConfig'
-import tailwindConfig from '@/tailwind.config.js'
 
 const fullTailwindConfig = resolveConfig(tailwindConfig)
 
@@ -744,6 +743,8 @@ export default {
           rawData[parkingId] = { ...parking }
           rawData[parkingId].id = parkingId
           rawData[parkingId].forecast = []
+          // https://github.com/noi-techpark/parking-app/issues/24
+          // Ignore skidata invalid capacities
           rawData[parkingId].invalidRealtime =
             parking.sorigin === 'skidata_dynamicdata' &&
             (parking.smetadata?.capacity ?? 0) >= 9999
@@ -754,6 +755,10 @@ export default {
           rawData[parkingId].mvalidtime = parking.mvalidtime
         }
 
+        // https://github.com/noi-techpark/parking-app/issues/24
+        // Use short stay data type for skidata
+        const expectedTname = parking.sorigin === 'skidata_dynamicdata' ? 'free_short_stay' : 'free'
+
         if(parking.ttype === 'Forecast') {
           rawData[parkingId].forecast.push({
             mperiod: parking.mperiod,
@@ -762,7 +767,7 @@ export default {
               Math.round(parking.mvalue),
           })
         }
-        else if (parking.ttype === 'Instantaneous' && parking.tname === 'free') {
+        else if (parking.ttype === 'Instantaneous' && parking.tname === expectedTname) {
           // save current mvalue as first value in forecasts array
           rawData[parkingId].forecast.push({
             mperiod: parking.mperiod,
