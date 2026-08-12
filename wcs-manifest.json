@@ -29,12 +29,169 @@
     "forecast"
   ],
   "dist": {
-    "basePath": "dist/nuxt-custom-elements/bolzano-parking-app",
-    "files": ["bolzano-parking-app.js"],
+    "basePath": "dist",
+    "files": [
+      "bolzano-parking-app.min.js"
+    ],
     "scripts": []
   },
   "configuration": {
     "tagName": "bolzano-parking-app",
-    "options": []
+    "options": [
+      {
+        "key": "municipalities",
+        "type": "text",
+        "label": "Municipalities to preselect, comma-separated, e.g. \"Bolzano - Bozen, Meran - Merano\". Empty shows everything.",
+        "required": false,
+        "options": {
+          "default": ""
+        }
+      },
+      {
+        "key": "multi-municipality",
+        "type": "select",
+        "label": "Allow selecting several municipalities at once.",
+        "required": false,
+        "options": {
+          "values": [
+            "true",
+            "false"
+          ],
+          "default": "true"
+        }
+      },
+      {
+        "key": "parkings",
+        "type": "text",
+        "label": "Station codes, comma-separated. When set, only these parkings are shown — use it to build a fixed dashboard for a specific set of car parks.",
+        "required": false,
+        "options": {
+          "default": ""
+        }
+      },
+      {
+        "key": "multi-parking",
+        "type": "select",
+        "label": "Allow picking several specific parkings at once.",
+        "required": false,
+        "options": {
+          "values": [
+            "true",
+            "false"
+          ],
+          "default": "true"
+        }
+      },
+      {
+        "key": "origins",
+        "type": "text",
+        "label": "Restrict to these data origins, comma-separated, e.g. \"FAMAS, GARDENA, SBB\". Empty means all.",
+        "required": false,
+        "options": {
+          "default": ""
+        }
+      },
+      {
+        "key": "multi-origin",
+        "type": "select",
+        "label": "Allow selecting several data origins at once.",
+        "required": false,
+        "options": {
+          "values": [
+            "true",
+            "false"
+          ],
+          "default": "true"
+        }
+      },
+      {
+        "key": "status",
+        "type": "text",
+        "label": "Preselect availability status, comma-separated: live, delayed, static. Empty means no restriction.",
+        "required": false,
+        "options": {
+          "default": ""
+        }
+      },
+      {
+        "key": "show-static",
+        "type": "select",
+        "label": "Include parkings that publish no live availability.",
+        "required": false,
+        "options": {
+          "values": [
+            "true",
+            "false"
+          ],
+          "default": "true"
+        }
+      },
+      {
+        "key": "search",
+        "type": "text",
+        "label": "Preset the free-text search box.",
+        "required": false,
+        "options": {
+          "default": ""
+        }
+      },
+      {
+        "key": "live-max-age",
+        "type": "text",
+        "label": "How recent a reading must be to count as real time, e.g. 30m, 2h.",
+        "required": false,
+        "options": {
+          "default": "30m"
+        }
+      },
+      {
+        "key": "stale-max-age",
+        "type": "text",
+        "label": "Readings older than this are not shown at all, e.g. 6mo, 30d.",
+        "required": false,
+        "options": {
+          "default": "6mo"
+        }
+      },
+      {
+        "key": "refresh-interval",
+        "type": "text",
+        "label": "How often to poll for new readings, e.g. 60s.",
+        "required": false,
+        "options": {
+          "default": "60s"
+        }
+      },
+      {
+        "key": "language",
+        "type": "select",
+        "label": "Interface language.",
+        "required": false,
+        "options": {
+          "values": [
+            "en"
+          ],
+          "default": "en"
+        }
+      },
+      {
+        "key": "center",
+        "type": "text",
+        "label": "Override the initial map centre as \"lon,lat\". Empty fits the view to the data.",
+        "required": false,
+        "options": {
+          "default": ""
+        }
+      },
+      {
+        "key": "zoom",
+        "type": "number",
+        "label": "Override the initial zoom level, 1-19 (used together with center).",
+        "required": false,
+        "options": {
+          "default": 13
+        }
+      }
+    ]
   }
 }

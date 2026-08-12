@@ -21,6 +21,13 @@ jobs:
         with:
           node-version: ${{env.NODE_VERSION}}
 
+      # yarn-build has already installed dependencies and set up node.
+      - name: Unit tests
+        run: yarn test
+
+      - name: Lint
+        run: yarn lint
+
       - name: Test Webcomponent
         uses: noi-techpark/github-actions/webcomp-test@v2
         with:
@@ -29,19 +36,23 @@ jobs:
   # https://parking.opendatahub.testingmachine.eu
   deploy-test:
     runs-on: ubuntu-24.04
-    if: github.ref == 'refs/heads/main'
+    # TEMPORARY: feat/parking-v2 is here so the rebuild can be exercised on the
+    # test site before it reaches main. Remove the branch once it is merged.
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/parking-v2'
     needs: test
     concurrency: deploy-test
     env:
       AWS_S3_BUCKET_NAME: 'com.opendatahub.parking-test'
       MATOMO: true
       ENVIRONMENT: test
+      # The standalone site owns its URL, so it mirrors filters into it.
+      STANDALONE: true
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
       - uses: noi-techpark/github-actions/yarn-build@v2
         with:
-          build-command: yarn generate
+          build-command: yarn build
           node-version: ${{env.NODE_VERSION}}
 
       - name: Sync to S3 bucket
@@ -63,12 +74,13 @@ jobs:
     env:
       AWS_S3_BUCKET_NAME: 'com.opendatahub.parking-prod'
       MATOMO: true
+      STANDALONE: true
     steps:
       - uses: noi-techpark/github-actions/checkout@v2
 
       - uses: noi-techpark/github-actions/yarn-build@v2
         with:
-          build-command: yarn generate
+          build-command: yarn build
           node-version: ${{env.NODE_VERSION}}
 
       - name: Sync to S3 bucket
@@ -83,7 +95,8 @@ jobs:
   # webcomponent
   deploy-webcomponent-test:
     runs-on: ubuntu-24.04
-    if: github.ref == 'refs/heads/main'
+    # TEMPORARY: see deploy-test above. Remove once merged to main.
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/parking-v2'
     needs: test
     concurrency: deploy-webcomponent-test
     env:
@@ -93,7 +106,7 @@ jobs:
 
       - uses: noi-techpark/github-actions/yarn-build@v2
         with:
-          build-command: yarn generate
+          build-command: yarn build
           node-version: ${{env.NODE_VERSION}}
 
       - uses: noi-techpark/github-actions/webcomp-push@v2
@@ -113,7 +126,7 @@ jobs:
 
       - uses: noi-techpark/github-actions/yarn-build@v2
         with:
-          build-command: yarn generate
+          build-command: yarn build
           node-version: ${{env.NODE_VERSION}}
 
       - uses: noi-techpark/github-actions/webcomp-push@v2

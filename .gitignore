@@ -68,11 +68,17 @@ package-lock.json
 # next.js build output
 .next
 
-# nuxt.js build output
+# nuxt.js build output (legacy)
 .nuxt
 
-# Nuxt generate
+# Build output
 dist
+
+# Vite cache
+.vite
+
+# Downloaded GISCO source data for `yarn geo:build`
+.geo-cache
 
 # vuepress build output
 .vuepress/dist

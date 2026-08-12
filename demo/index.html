@@ -1,0 +1,136 @@
+<!doctype html>
+<!--
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Parking webcomponent — configuration demo</title>
+    <style>
+      /*
+       * Deliberately aggressive page styles. The component renders into a shadow
+       * root, so none of this should reach it — if the cards turn Comic Sans or
+       * the map goes pink, encapsulation is broken.
+       */
+      * {
+        font-family: 'Comic Sans MS', cursive;
+      }
+      body {
+        max-width: 70rem;
+        margin: 0 auto;
+        padding: 1.5rem;
+        color: #222;
+        background: #fff5f8;
+      }
+      div {
+        color: hotpink;
+      }
+      button {
+        background: hotpink !important;
+      }
+      h1,
+      h2 {
+        font-family: georgia, serif;
+      }
+      section {
+        margin-bottom: 2.5rem;
+      }
+      code {
+        padding: 0.1rem 0.3rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.85em;
+        background: #eee;
+        border-radius: 3px;
+      }
+      .frame {
+        height: 34rem;
+        overflow: hidden;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+      .frame--narrow {
+        width: 24rem;
+        height: 40rem;
+      }
+      p.note {
+        font-size: 0.9rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>bolzano-parking-app</h1>
+    <p class="note">
+      Every block below embeds the same bundle with different attributes. Load
+      this after <code>yarn build</code>, e.g. via
+      <code>npx serve .</code> from the repository root.
+    </p>
+
+    <section>
+      <h2>Defaults</h2>
+      <p class="note">No attributes: every parking, all filters available.</p>
+      <div class="frame"><bolzano-parking-app></bolzano-parking-app></div>
+    </section>
+
+    <section>
+      <h2>Pinned to two municipalities, single-select</h2>
+      <p class="note">
+        <code>municipalities="Bolzano - Bozen, Meran - Merano"</code>
+        <code>multi-municipality="false"</code>
+      </p>
+      <div class="frame">
+        <bolzano-parking-app
+          municipalities="Bolzano - Bozen, Meran - Merano"
+          multi-municipality="false"
+        ></bolzano-parking-app>
+      </div>
+    </section>
+
+    <section>
+      <h2>Real-time sources only, tighter live window</h2>
+      <p class="note">
+        <code>show-static="false"</code> <code>live-max-age="15m"</code>
+        <code>origins="FAMAS, skidata_dynamicdata, Municipality Bolzano"</code>
+      </p>
+      <div class="frame">
+        <bolzano-parking-app
+          show-static="false"
+          live-max-age="15m"
+          origins="FAMAS, skidata_dynamicdata, Municipality Bolzano"
+        ></bolzano-parking-app>
+      </div>
+    </section>
+
+    <section>
+      <h2>Fixed viewport, no multi-select at all</h2>
+      <p class="note">
+        <code>center="11.35,46.50"</code> <code>zoom="13"</code>
+        <code>multi-parking="false"</code> <code>multi-origin="false"</code>
+      </p>
+      <div class="frame">
+        <bolzano-parking-app
+          center="11.35,46.50"
+          zoom="13"
+          multi-parking="false"
+          multi-origin="false"
+        ></bolzano-parking-app>
+      </div>
+    </section>
+
+    <section>
+      <h2>Narrow container (mobile layout on a desktop page)</h2>
+      <p class="note">
+        Breakpoints are measured on the element, not the viewport, so a 384 px
+        column gets the sheet layout even here.
+      </p>
+      <div class="frame frame--narrow">
+        <bolzano-parking-app></bolzano-parking-app>
+      </div>
+    </section>
+
+    <script src="../dist/bolzano-parking-app.min.js"></script>
+  </body>
+</html>
