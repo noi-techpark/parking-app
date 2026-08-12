@@ -28,6 +28,11 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      # Everything above tests source through Vite's transform. This runs the
+      # artefact that actually gets published.
+      - name: Verify built bundle
+        run: yarn verify:bundle
+
       - name: Test Webcomponent
         uses: noi-techpark/github-actions/webcomp-test@v2
         with:

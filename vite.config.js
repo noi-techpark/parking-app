@@ -15,7 +15,7 @@ const MATOMO = process.env.MATOMO === 'true'
 
 const src = fileURLToPath(new URL('./src', import.meta.url))
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   plugins: [
     // customElement: true compiles every SFC <style> into a string on the
     // component's `styles` option, so Vue can inject it into the shadow root
@@ -29,6 +29,15 @@ export default defineConfig(({ command }) => ({
   },
 
   define: {
+    /*
+     * Vite's library mode deliberately leaves `process.env.NODE_ENV` in place,
+     * expecting the consuming bundler to substitute it. Nothing consumes this
+     * bundle — the webcomponent store loads it as a plain <script> — so without
+     * this the very first Vue module throws "process is not defined" and the
+     * element never registers.
+     */
+    'process.env.NODE_ENV': JSON.stringify(mode),
+
     __ENVIRONMENT__: JSON.stringify(ENVIRONMENT),
     __MATOMO__: JSON.stringify(MATOMO),
     /*

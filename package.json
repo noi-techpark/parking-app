@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/emit-shell.mjs",
+    "verify:bundle": "node scripts/verify-bundle.mjs",
     "preview": "vite preview",
     "geo:build": "node scripts/build-municipalities.mjs",
     "verify:live": "node scripts/verify-live.mjs",
