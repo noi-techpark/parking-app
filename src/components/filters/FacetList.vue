@@ -34,7 +34,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
           <input
             type="checkbox"
             :checked="isSelected(option.id)"
-            :disabled="!multi && selected.length >= 1 && !isSelected(option.id)"
             @change="$emit('toggle', option.id)"
           />
           <span class="label">{{ option.name ?? option.id }}</span>
@@ -62,16 +61,12 @@ import { useI18n } from 'vue-i18n'
  * One multi-select facet. Handles the case this app now has a lot of: 700+
  * municipalities, which needs search and progressive disclosure rather than a
  * row of tabs.
- *
- * `multi` is false when the embedding page has disabled multi-selection for
- * this dimension (requirements 3, 4 and 5 are individually configurable).
  */
 const props = defineProps({
   title: { type: String, required: true },
   /** [{ id, name, count }] */
   options: { type: Array, default: () => [] },
   selected: { type: Array, default: () => [] },
-  multi: { type: Boolean, default: true },
   searchable: { type: Boolean, default: false },
   searchPlaceholder: { type: String, default: '' },
   limit: { type: Number, default: 8 },

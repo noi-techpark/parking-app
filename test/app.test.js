@@ -338,6 +338,43 @@ describe('parking app end to end (map stubbed)', () => {
     expect(mapCalls.fitBounds + mapCalls.fitToParkings).toBeGreaterThan(afterParking)
   })
 
+  it('hides the filter bar entirely when filters are locked', async () => {
+    // A preconfigured dashboard has to be lockable: restricting a filter to
+    // single-select still leaves the visitor able to change it.
+    element.remove()
+    const locked = document.createElement('bolzano-parking-app')
+    Object.defineProperty(locked, 'clientWidth', { value: 1400, configurable: true })
+    locked.setAttribute('filters', 'none')
+    document.body.appendChild(locked)
+    await until(() => locked.shadowRoot?.querySelectorAll('.parking-card').length)
+    await settle()
+
+    expect(locked.shadowRoot.querySelectorAll('.filter-pill')).toHaveLength(0)
+    expect(locked.shadowRoot.querySelector('.filter-bar')).toBeNull()
+    // The results themselves are still there.
+    expect(locked.shadowRoot.querySelectorAll('.parking-card').length).toBeGreaterThan(0)
+    locked.remove()
+  })
+
+  it('exposes only the filters it is told to', async () => {
+    element.remove()
+    const some = document.createElement('bolzano-parking-app')
+    Object.defineProperty(some, 'clientWidth', { value: 1400, configurable: true })
+    some.setAttribute('filters', 'municipality,status')
+    document.body.appendChild(some)
+    await until(() => some.shadowRoot?.querySelectorAll('.parking-card').length)
+    await settle()
+
+    const titles = [...some.shadowRoot.querySelectorAll('.filter-pill')].map(
+      (p) => p.querySelector('.title').textContent.trim()
+    )
+    expect(titles).toHaveLength(2)
+    expect(titles.join(' ')).toMatch(/Municipalit/i)
+    expect(titles.join(' ')).toMatch(/Status/i)
+    expect(titles.join(' ')).not.toMatch(/Specific parkings/i)
+    some.remove()
+  })
+
   it('stops polling when the element is removed', async () => {
     const before = globalThis.fetch.mock.calls.length
     element.remove()

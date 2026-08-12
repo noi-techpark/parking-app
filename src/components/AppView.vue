@@ -45,7 +45,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       />
 
       <!-- Filters live over the map so they cost no layout space. -->
-      <div class="filter-bar">
+      <div v-if="facets.length" class="filter-bar">
         <div v-for="facet in facets" :key="facet.key" class="filter-slot">
           <FilterPill
             :title="facet.title"
@@ -66,7 +66,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
               :title="facet.title"
               :options="facet.options"
               :selected="facet.selected"
-              :multi="facet.multi"
               :searchable="facet.searchable"
               :search-placeholder="facet.searchPlaceholder ?? t('filters.searchMunicipality')"
               :limit="facet.searchable ? 40 : 12"
@@ -130,13 +129,18 @@ import { useUrlState } from '@/composables/useUrlState.js'
  */
 const props = defineProps({
   municipalities: { type: String, default: '' },
-  multiMunicipality: { type: String, default: 'true' },
   parkings: { type: String, default: '' },
-  multiParking: { type: String, default: 'true' },
   origins: { type: String, default: '' },
-  multiOrigin: { type: String, default: 'true' },
   /** Comma-separated `live`, `delayed`, `static`. Empty means no restriction. */
   status: { type: String, default: '' },
+  /**
+   * Which filters the visitor may change, comma-separated.
+   *
+   * Set to a subset to expose only those, or to `none` to hide the filter bar
+   * entirely — which is how a preconfigured dashboard is locked down, since
+   * restricting a filter to single-select still leaves it changeable.
+   */
+  filters: { type: String, default: 'municipality,parking,origin,status' },
   /** Seeds the free-text search box. */
   search: { type: String, default: '' },
   staleMaxAge: { type: String, default: DEFAULTS.staleMaxAge },
@@ -158,9 +162,6 @@ const openFacet = ref(null)
 const selectedStatuses = ref([])
 const width = ref(1200)
 
-const multiMunicipalityEnabled = computed(() => parseBool(props.multiMunicipality, true))
-const multiParkingEnabled = computed(() => parseBool(props.multiParking, true))
-const multiOriginEnabled = computed(() => parseBool(props.multiOrigin, true))
 const showStaticEnabled = computed(() => parseBool(props.showStatic, true))
 
 /**
@@ -188,17 +189,23 @@ const statusOptions = computed(() => [
   { id: CATEGORY.STATIC, name: t('status.static'), count: store.counts.static ?? 0 },
 ])
 
+/** The facets this embed is allowed to expose; `none` hides the bar. */
+const enabledFacets = computed(() => {
+  const requested = parseList(props.filters).map((name) => name.toLowerCase())
+  if (!requested.length || requested.includes('none')) return new Set()
+  return new Set(requested)
+})
+
 /** One descriptor per pill, so the bar and the chips stay in step. */
-const facets = computed(() => [
+const allFacets = computed(() => [
   {
     key: 'municipality',
     title: t('filters.municipalities'),
     options: store.municipalities,
     selected: store.selectedMunicipalityIds,
-    multi: multiMunicipalityEnabled.value,
     searchable: true,
     value: summarise(store.selectedMunicipalityIds, store.municipalities),
-    toggle: (id) => store.toggleMunicipality(id, multiMunicipalityEnabled.value),
+    toggle: (id) => store.toggleMunicipality(id),
     clear: () => {
       store.selectedMunicipalityIds = []
     },
@@ -208,10 +215,9 @@ const facets = computed(() => [
     title: t('filters.origins'),
     options: store.availableOrigins.map((o) => ({ ...o, name: o.id })),
     selected: store.selectedOrigins,
-    multi: multiOriginEnabled.value,
     searchable: false,
     value: summarise(store.selectedOrigins, store.availableOrigins),
-    toggle: (id) => store.toggleOrigin(id, multiOriginEnabled.value),
+    toggle: (id) => store.toggleOrigin(id),
     clear: () => {
       store.selectedOrigins = []
     },
@@ -221,11 +227,10 @@ const facets = computed(() => [
     title: t('filters.parkings'),
     options: store.parkingOptions,
     selected: store.selectedParkingIds,
-    multi: multiParkingEnabled.value,
     searchable: true,
     searchPlaceholder: t('filters.searchParking'),
     value: summarise(store.selectedParkingIds, store.parkingOptions),
-    toggle: (id) => store.toggleParking(id, multiParkingEnabled.value),
+    toggle: (id) => store.toggleParking(id),
     clear: () => {
       store.selectedParkingIds = []
     },
@@ -235,7 +240,6 @@ const facets = computed(() => [
     title: t('filters.status'),
     options: statusOptions.value,
     selected: selectedStatuses.value,
-    multi: true,
     searchable: false,
     value: summarise(selectedStatuses.value, statusOptions.value),
     toggle: toggleStatus,
@@ -244,6 +248,10 @@ const facets = computed(() => [
     },
   },
 ])
+
+const facets = computed(() =>
+  allFacets.value.filter((facet) => enabledFacets.value.has(facet.key))
+)
 
 /** A pill always states its selection: a name, a count, or "all". */
 function summarise(selectedIds, options) {
@@ -550,13 +558,8 @@ onMounted(async () => {
   // Attributes seed the selection; anything already in the URL wins over them.
   const wantedMunicipalities = parseList(props.municipalities)
   if (wantedMunicipalities.length && !store.selectedMunicipalityIds.length) {
-    const geo = store.geoDataset
-    const byName = new Map(
-      (store.municipalities ?? []).map((m) => [m.name.toLowerCase(), m.id])
-    )
-    store.selectedMunicipalityIds = wantedMunicipalities
-      .map((entry) => (geo?.byId.has(entry) ? entry : byName.get(entry.toLowerCase())))
-      .filter(Boolean)
+    // Accepts ids, official names and any language variant.
+    store.selectedMunicipalityIds = store.municipalityIdsFor(wantedMunicipalities)
   }
   const wantedParkings = parseList(props.parkings)
   if (wantedParkings.length && !store.selectedParkingIds.length) {

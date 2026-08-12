@@ -291,6 +291,31 @@ export const useParkingStore = defineStore('parkings', () => {
     }
   }
 
+  /**
+   * Resolves whatever an integrator wrote into municipality ids.
+   *
+   * Accepts the id itself, the official OSM name, any of its language variants
+   * and the current display name, all case-insensitively — matching only the
+   * localised display name meant `municipalities="Bolzano - Bozen"` silently
+   * matched nothing as soon as `language="it"` renamed it to "Bolzano".
+   */
+  function municipalityIdsFor(entries) {
+    if (!geo) return []
+
+    const lookup = new Map()
+    const add = (key, id) => {
+      if (key) lookup.set(String(key).trim().toLowerCase(), id)
+    }
+    for (const entry of geo.index) {
+      add(entry.id, entry.id)
+      add(entry.n, entry.id)
+      for (const variant of Object.values(entry.nm ?? {})) add(variant, entry.id)
+      add(municipalityDisplayName(entry, config.value.locale), entry.id)
+    }
+
+    return entries.map((entry) => lookup.get(String(entry).trim().toLowerCase())).filter(Boolean)
+  }
+
   /** Internal ids -> station codes, for anything user-facing like a URL. */
   function scodesFor(ids) {
     const byId = new Map(parkings.value.map((p) => [p.id, p.scode]))
@@ -431,6 +456,7 @@ export const useParkingStore = defineStore('parkings', () => {
     stopPolling,
     loadForecast,
     scodesFor,
+    municipalityIdsFor,
     ensureBoundaries,
     geoDataset,
     toggleMunicipality: (id, multi) => toggle(selectedMunicipalityIds, id, multi),

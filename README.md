@@ -66,17 +66,15 @@ after `yarn build`.
 ### Attributes
 
 Custom-element attributes are always strings, including booleans — write
-`multi-parking="false"`, not `:multi-parking="false"`.
+`show-static="false"`, not `:show-static="false"`.
 
 | Attribute | Default | Purpose |
 |---|---|---|
 | `municipalities` | `""` | Comma-separated municipality names to preselect |
-| `multi-municipality` | `true` | Allow selecting several municipalities |
 | `parkings` | `""` | Comma-separated station codes. When set, **only these are shown** — a fixed dashboard |
-| `multi-parking` | `true` | Allow picking several specific parkings |
 | `origins` | `""` | Restrict to given data origins |
-| `multi-origin` | `true` | Allow selecting several origins |
 | `status` | `""` | Preselect `live`, `delayed`, `static` |
+| `filters` | all | Which filters the visitor may change; `none` locks the view |
 | `search` | `""` | Preset the free-text search |
 | `live-max-age` | `30m` | How recent a reading must be to count as real time |
 | `stale-max-age` | `6mo` | Readings older than this are not shown at all |
@@ -99,6 +97,19 @@ you build a page for one operator, one district or one customer:
 The same selection is available interactively through the **Specific parkings**
 filter, so on the standalone site a user can assemble a dashboard and share the
 resulting link.
+
+To lock a dashboard down, hide the filters:
+
+```html
+<bolzano-parking-app parkings="103,104,105,112" filters="none">
+```
+
+`filters` also takes a subset, e.g. `filters="municipality,status"` to offer
+those two and hide the rest.
+
+Municipality names are accepted in any language, as is the internal id — so
+`municipalities="Bolzano - Bozen"`, `"Bozen"` and `"Bolzano"` all resolve to the
+same place regardless of the `language` setting.
 
 ### URL state
 

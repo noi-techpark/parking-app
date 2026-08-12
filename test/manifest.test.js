@@ -54,7 +54,7 @@ describe('wcs-manifest.json', () => {
 
   it('offers yes/no choices as a select rather than free text', () => {
     // Booleans arrive as strings; a text box invites "yes", "1" or a typo.
-    const booleans = options.filter((o) => o.key.startsWith('multi-') || o.key === 'show-static')
+    const booleans = options.filter((o) => o.key === 'show-static')
     expect(booleans.length).toBeGreaterThan(0)
     for (const option of booleans) {
       expect(option.type, `${option.key}`).toBe('select')
@@ -67,12 +67,10 @@ describe('wcs-manifest.json', () => {
     // facet needs a way in too.
     for (const key of [
       'municipalities',
-      'multi-municipality',
       'parkings',
-      'multi-parking',
       'origins',
-      'multi-origin',
       'status',
+      'filters',
       'search',
     ]) {
       expect(options.some((o) => o.key === key), `missing option: ${key}`).toBe(true)
