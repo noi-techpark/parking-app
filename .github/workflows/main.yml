@@ -49,7 +49,8 @@ jobs:
     env:
       AWS_S3_BUCKET_NAME: 'com.opendatahub.parking-test'
       MATOMO: true
-      ENVIRONMENT: test
+      # TEMPORARY: test site reads production data. Restore ENVIRONMENT: test.
+      # ENVIRONMENT: test
       # The standalone site owns its URL, so it mirrors filters into it.
       STANDALONE: true
     steps:
