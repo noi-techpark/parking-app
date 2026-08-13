@@ -41,7 +41,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
         :selected-ids="highlightedIds"
         :boundaries="selectedBoundaries"
         :aria-label="t('map.label')"
-        @select="onSelectParking"
+        @select="(parking) => onSelectParking(parking, { fromMap: true })"
       />
 
       <!-- Filters live over the map so they cost no layout space. -->
@@ -327,14 +327,17 @@ function toggleStatus(id) {
     : [...selectedStatuses.value, id]
 }
 
-function onSelectParking(parking) {
-  // Selecting opens the detail; it does not add to the dashboard selection,
-  // which is what the "specific parkings" filter is for.
+// Selecting opens the detail; it does not add to the dashboard selection, which
+// is what the "specific parkings" filter is for.
+function onSelectParking(parking, { fromMap = false } = {}) {
   store.focusedParkingId = store.focusedParkingId === parking.id ? null : parking.id
-  if (store.focusedParkingId) {
-    store.loadForecast(parking.id)
-    if (layout.value === 'narrow') sheetRef.value?.expand()
-  }
+  if (!store.focusedParkingId) return
+
+  store.loadForecast(parking.id)
+  if (layout.value === 'narrow') sheetRef.value?.expand()
+  // A marker the user just clicked is already on screen; a list card may be
+  // anywhere, so only the list moves the camera.
+  if (!fromMap) mapRef.value?.focusOn(parking.coord?.lon, parking.coord?.lat)
 }
 
 /**

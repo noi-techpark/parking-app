@@ -371,7 +371,21 @@ watch(
   () => map?.render()
 )
 
-defineExpose({ fitBounds, fitToParkings, getMap: () => map })
+/** Zoom in far enough that a single marker is not lost among its neighbours. */
+const FOCUS_MIN_ZOOM = 15
+
+function focusOn(lon, lat) {
+  if (!map || !Number.isFinite(lon) || !Number.isFinite(lat)) return
+  const view = map.getView()
+  view.animate({
+    center: fromLonLat([lon, lat]),
+    // Only ever zoom in: yanking the camera out from a close view is jarring.
+    zoom: Math.max(view.getZoom() ?? 0, FOCUS_MIN_ZOOM),
+    duration: 400,
+  })
+}
+
+defineExpose({ fitBounds, fitToParkings, focusOn, getMap: () => map })
 </script>
 
 <style>

@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 // wiring can be exercised.
 /** Records the props the map was last given, so they can be asserted. */
 const mapProps = { current: null }
-const mapCalls = { fitBounds: 0, fitToParkings: 0 }
+const mapCalls = { fitBounds: 0, fitToParkings: 0, focusOn: [] }
 
 vi.mock('@/components/map/MapCanvas.vue', () => ({
   default: {
@@ -22,6 +22,9 @@ vi.mock('@/components/map/MapCanvas.vue', () => ({
         },
         fitToParkings: () => {
           mapCalls.fitToParkings++
+        },
+        focusOn: (lon, lat) => {
+          mapCalls.focusOn.push([lon, lat])
         },
         getMap: () => null,
       })
@@ -150,6 +153,7 @@ describe('parking app end to end (map stubbed)', () => {
     vi.restoreAllMocks()
     mapCalls.fitBounds = 0
     mapCalls.fitToParkings = 0
+    mapCalls.focusOn = []
   })
 
   const shadow = () => element.shadowRoot
@@ -279,6 +283,29 @@ describe('parking app end to end (map stubbed)', () => {
     expect(card.querySelector('.sparkline')).toBeNull()
     // ...and does not apologise for it in prose either.
     expect(card.textContent).not.toMatch(/No forecast/i)
+  })
+
+  it('centres the map on the parking whose card was clicked', async () => {
+    const card = cards().find((c) => c.textContent.includes('Parcheggio Centro'))
+    card.click()
+    await settle()
+
+    expect(mapCalls.focusOn).toEqual([[11.33818, 46.49869]])
+  })
+
+  it('does not move the camera when the marker itself was clicked', async () => {
+    // It is already on screen; panning under the cursor would be disorienting.
+    const stub = mapProps.current
+    expect(stub).toBeTruthy()
+    mapCalls.focusOn = []
+
+    const parking = stub.parkings.find((p) => p.name === 'Parcheggio Centro')
+    element.shadowRoot.host // keep the element referenced
+    const map = element._instance.setupState
+    map.onSelectParking(parking, { fromMap: true })
+    await settle()
+
+    expect(mapCalls.focusOn).toEqual([])
   })
 
   it('opens the detail view when a card is chosen', async () => {
