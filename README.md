@@ -82,7 +82,7 @@ Custom-element attributes are always strings, including booleans — write
 | `stale-max-age` | `6mo` | Readings older than this are not shown at all |
 | `refresh-interval` | `60s` | Poll interval for readings |
 | `show-static` | `true` | Include parkings with no live availability |
-| `language` | `""` | Interface language as ISO 639-3 (`eng`, `ita`, `deu`); empty follows the browser |
+| `language` | `""` | Interface language as ISO 639-3 (`eng`, `ita`, `deu`); empty or `auto` follows the browser |
 | `center` / `zoom` | `""` | Override the initial camera (`"lon,lat"`) |
 
 Durations accept `s`, `m`, `h`, `d`, `w`, `mo`, `y`.
@@ -109,13 +109,22 @@ To lock a dashboard down, hide the filters:
 `filters` also takes a subset, e.g. `filters="municipality,status"` to offer
 those two and hide the rest.
 
+In the webcomponent store's configurator these are not all free-text boxes:
+`status` is a multiselect, `language` a dropdown, `show-static` and
+`card-actions` toggles, and `zoom` a bounded number. `filters` stays free text
+because a multiselect default can only name one value, and the useful default is
+all five. `wcs-manifest.json` is validated against the store's published schema
+(`frontend/src/static/schemas/wcs-manifest-schema.json`); `test/manifest.test.js`
+asserts the same per-type rules so a rejected upload is caught here first.
+
 Municipality names are accepted in any language, as is the internal id — so
 `municipalities="Bolzano - Bozen"`, `"Bozen"` and `"Bolzano"` all resolve to the
 same place regardless of the `language` setting.
 
 ### Language
 
-English, Italian and German, keyed by ISO 639-3. Leaving `language` empty picks
+English, Italian and German, keyed by ISO 639-3. Leaving `language` empty (or
+`auto`, which is what the store's dropdown offers) picks
 the first of those the visitor's browser asks for and offers a gear-icon
 switcher beside the filter pills; setting it — `language="deu"` — pins the
 choice and removes the switcher, which is what an embed with its own language

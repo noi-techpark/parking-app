@@ -65,3 +65,18 @@ describe('parseLonLat', () => {
     expect(parseLonLat('')).toBeNull()
   })
 })
+
+describe('multiselect attributes', () => {
+  it('accepts a JSON array as well as a comma-separated list', () => {
+    // The store's multiselect option type has no documented encoding, and
+    // splitting a JSON array on commas yields '["live"' and '"delayed"]'.
+    expect(parseList('["live","delayed"]')).toEqual(['live', 'delayed'])
+    expect(parseList('[ "live" , "static" ]')).toEqual(['live', 'static'])
+    expect(parseList('live,delayed')).toEqual(['live', 'delayed'])
+    expect(parseList('[]')).toEqual([])
+  })
+
+  it('falls back to comma-splitting when the brackets are not JSON', () => {
+    expect(parseList('[live,delayed]')).toEqual(['[live', 'delayed]'])
+  })
+})

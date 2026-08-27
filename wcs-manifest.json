@@ -41,7 +41,7 @@
       {
         "key": "municipalities",
         "type": "text",
-        "label": "Show only these municipalities, comma-separated. Accepts the name in any language or the internal id, e.g. \"Bolzano - Bozen, Merano\" or \"Bozen, Meran\". Leave empty to show all.",
+        "label": "Show only these municipalities, comma-separated. Easiest is the name in any language — \"Bolzano - Bozen, Merano\" and \"Bozen, Meran\" both work. Internal ids also work and are stable across renames: \"osm:r47207\" (Bolzano - Bozen), \"osm:r47283\" (Meran - Merano), \"osm:r47317\" (Bruneck - Brunico). Leave empty to show all.",
         "required": false,
         "options": {
           "default": ""
@@ -50,7 +50,7 @@
       {
         "key": "parkings",
         "type": "text",
-        "label": "Show only these car parks, comma-separated station codes (e.g. \"103,105,112\"). This is how you build a fixed dashboard for one operator or district. Leave empty to show all.",
+        "label": "Show only these car parks, comma-separated station codes — e.g. \"105, 113\" or a full \"urn:parking:skidata:...\" code. This is how you build a fixed dashboard for one operator or district. Leave empty to show all.",
         "required": false,
         "options": {
           "default": ""
@@ -59,7 +59,7 @@
       {
         "key": "origins",
         "type": "text",
-        "label": "Show only these data providers, comma-separated, e.g. \"FAMAS, GARDENA, SBB\". Leave empty to show all.",
+        "label": "Show only these data providers, comma-separated. Currently published: SBB, skidata_dynamicdata, GARDENA, FBK, FAMAS, skidata, \"Municipality Merano\", \"Municipality Bolzano\", STA, Swarco. Leave empty to show all.",
         "required": false,
         "options": {
           "default": ""
@@ -67,17 +67,21 @@
       },
       {
         "key": "status",
-        "type": "text",
-        "label": "Show only parkings with these statuses, comma-separated: live, delayed, static. Leave empty for all.",
+        "type": "multiselect",
+        "label": "Show only car parks with these statuses. Live means a reading newer than \"live-max-age\"; delayed means older but still within \"stale-max-age\"; static means the car park publishes no live availability at all. Select none to show every status.",
         "required": false,
         "options": {
-          "default": ""
+          "values": [
+            "live",
+            "delayed",
+            "static"
+          ]
         }
       },
       {
         "key": "excluded",
         "type": "text",
-        "label": "Never show these car parks, comma-separated station codes (e.g. \"103,105\"). Applied on top of every other setting, so a car park listed here stays hidden even if \"parkings\" names it.",
+        "label": "Never show these car parks, comma-separated station codes — e.g. \"105, 113\". Applied on top of every other setting, so a car park listed here stays hidden even if \"parkings\" names it.",
         "required": false,
         "options": {
           "default": ""
@@ -86,7 +90,7 @@
       {
         "key": "filters",
         "type": "text",
-        "label": "Which filters the visitor may change, comma-separated: municipality, parking, origin, status, excluded. Use \"none\" to hide the filter bar completely and lock the view to whatever the settings above define.",
+        "label": "Which filters the visitor may change, comma-separated from: municipality, parking, origin, status, excluded. Use \"none\" to hide the filter bar completely and lock the view to whatever the settings above define.",
         "required": false,
         "options": {
           "default": "municipality,parking,origin,status,excluded"
@@ -94,34 +98,26 @@
       },
       {
         "key": "card-actions",
-        "type": "select",
-        "label": "Offer the per-card menu that lets a visitor hide a single car park. Ignored when the \"excluded\" filter is not among the visible filters, because a hidden car park could then never be restored.",
+        "type": "bool",
+        "label": "Offer the per-card menu that lets a visitor hide a single car park. Ignored when \"excluded\" is not among the filters above, because a hidden car park could then never be restored.",
         "required": false,
         "options": {
-          "values": [
-            "true",
-            "false"
-          ],
-          "default": "true"
+          "default": true
         }
       },
       {
         "key": "show-static",
-        "type": "select",
-        "label": "Include parkings that publish no live availability.",
+        "type": "bool",
+        "label": "Include car parks that publish no live availability.",
         "required": false,
         "options": {
-          "values": [
-            "true",
-            "false"
-          ],
-          "default": "true"
+          "default": true
         }
       },
       {
         "key": "search",
         "type": "text",
-        "label": "Preset the free-text search box.",
+        "label": "Preset the free-text search box, e.g. \"fiera\".",
         "required": false,
         "options": {
           "default": ""
@@ -130,7 +126,7 @@
       {
         "key": "live-max-age",
         "type": "text",
-        "label": "How recent a reading must be to count as real time, e.g. 30m, 2h.",
+        "label": "How recent a reading must be to count as real time. A number with a unit: s, m, h, d, mo — e.g. \"30m\", \"2h\".",
         "required": false,
         "options": {
           "default": "30m"
@@ -139,7 +135,7 @@
       {
         "key": "stale-max-age",
         "type": "text",
-        "label": "Readings older than this are not shown at all, e.g. 6mo, 30d.",
+        "label": "Readings older than this are not shown at all. Same format as \"live-max-age\" — e.g. \"6mo\", \"30d\".",
         "required": false,
         "options": {
           "default": "6mo"
@@ -148,7 +144,7 @@
       {
         "key": "refresh-interval",
         "type": "text",
-        "label": "How often to poll for new readings, e.g. 60s.",
+        "label": "How often to poll for new readings, e.g. \"60s\", \"5m\".",
         "required": false,
         "options": {
           "default": "60s"
@@ -157,22 +153,22 @@
       {
         "key": "language",
         "type": "select",
-        "label": "Interface language as an ISO 639-3 code. Leave empty to follow the visitor's browser and let them switch; setting it pins the language and removes the switcher.",
+        "label": "Interface language, ISO 639-3. \"auto\" follows the visitor's browser and shows a language switcher; picking one pins it and removes the switcher. Station names follow the choice wherever the operator publishes a translation.",
         "required": false,
         "options": {
           "values": [
-            "",
+            "auto",
             "eng",
             "ita",
             "deu"
           ],
-          "default": ""
+          "default": "auto"
         }
       },
       {
         "key": "center",
         "type": "text",
-        "label": "Override the initial map centre as \"lon,lat\". Empty fits the view to the data.",
+        "label": "Override the initial map centre as \"lon,lat\", e.g. \"11.35,46.50\". Empty fits the view to the data.",
         "required": false,
         "options": {
           "default": ""
@@ -181,10 +177,13 @@
       {
         "key": "zoom",
         "type": "number",
-        "label": "Override the initial zoom level, 1-19 (used together with center).",
+        "label": "Override the initial zoom level. Only used together with \"center\".",
         "required": false,
         "options": {
-          "default": 13
+          "default": 13,
+          "min": 1,
+          "max": 19,
+          "step": 1
         }
       }
     ]

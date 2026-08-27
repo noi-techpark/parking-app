@@ -56,3 +56,13 @@ describe('locale', () => {
     }
   })
 })
+
+describe('the "auto" language option', () => {
+  it('is not a language, so it falls through to browser detection', () => {
+    // The manifest offers "auto" as the default dropdown value because a blank
+    // entry reads as a mistake. Nothing special-cases it: it simply is not a
+    // supported code, so the caller falls back the same way it would for "".
+    expect(normalizeLocale('auto')).toBeNull()
+    expect(normalizeLocale('auto') ?? detectLocale({ languages: ['it'] })).toBe('ita')
+  })
+})

@@ -28,6 +28,20 @@ export function parseBool(value, fallback = false) {
 export function parseList(value) {
   if (Array.isArray(value)) return value.filter(Boolean)
   if (value == null) return []
+
+  // The store's `multiselect` option type has no documented attribute encoding,
+  // so accept a JSON array as well as the comma-separated form. Splitting a
+  // JSON array on commas would otherwise yield '["live"' and '"delayed"]'.
+  const text = String(value).trim()
+  if (text.startsWith('[') && text.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(text)
+      if (Array.isArray(parsed)) return parsed.map((entry) => String(entry).trim()).filter(Boolean)
+    } catch {
+      // Not JSON after all; fall through to the comma-separated path.
+    }
+  }
+
   return String(value)
     .split(',')
     .map((entry) => entry.trim())

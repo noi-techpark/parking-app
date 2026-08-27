@@ -97,3 +97,6 @@ sw.*
 
 # Vim swap files
 *.swp
+
+# Serena MCP server: per-project language-server config, machine-local
+.serena/
