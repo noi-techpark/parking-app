@@ -74,13 +74,15 @@ Custom-element attributes are always strings, including booleans — write
 | `parkings` | `""` | Comma-separated station codes. When set, **only these are shown** — a fixed dashboard |
 | `origins` | `""` | Restrict to given data origins |
 | `status` | `""` | Preselect `live`, `delayed`, `static` |
+| `excluded` | `""` | Comma-separated station codes to hide outright; beats every other setting |
 | `filters` | all | Which filters the visitor may change; `none` locks the view |
+| `card-actions` | `true` | Offer the per-card ⋮ menu that hides a single car park |
 | `search` | `""` | Preset the free-text search |
 | `live-max-age` | `30m` | How recent a reading must be to count as real time |
 | `stale-max-age` | `6mo` | Readings older than this are not shown at all |
 | `refresh-interval` | `60s` | Poll interval for readings |
 | `show-static` | `true` | Include parkings with no live availability |
-| `language` | `en` | Interface language |
+| `language` | `""` | Interface language as ISO 639-3 (`eng`, `ita`, `deu`); empty follows the browser |
 | `center` / `zoom` | `""` | Override the initial camera (`"lon,lat"`) |
 
 Durations accept `s`, `m`, `h`, `d`, `w`, `mo`, `y`.
@@ -111,6 +113,40 @@ Municipality names are accepted in any language, as is the internal id — so
 `municipalities="Bolzano - Bozen"`, `"Bozen"` and `"Bolzano"` all resolve to the
 same place regardless of the `language` setting.
 
+### Language
+
+English, Italian and German, keyed by ISO 639-3. Leaving `language` empty picks
+the first of those the visitor's browser asks for and offers a gear-icon
+switcher beside the filter pills; setting it — `language="deu"` — pins the
+choice and removes the switcher, which is what an embed with its own language
+control wants. The switcher is standalone-only in any case.
+
+The language reaches the data, not just the interface: stations and tourism
+points are relabelled from the operator's own `name_it` / `name_de` / `name_en`
+metadata, falling back to `standard_name` and then to the raw station name.
+Coverage is thin — 76 of 909 stations publish a usable localised name — but all
+527 tourism points do, and all three of their languages genuinely differ.
+
+Two upstream quirks are handled. The casing is inconsistent: 67 stations use
+`name_it`, 20 use `name_IT`, and none of the latter group publishes English at
+all. And 11 FBK stations publish the literal strings `test-it` / `test-de` /
+`test-en` as their names, which are rejected rather than displayed.
+
+### Hiding car parks
+
+`excluded` takes station codes that are never shown, and it wins over
+everything else — a code in both `parkings` and `excluded` stays hidden. A
+visitor can hide one from the ⋮ menu on its card, and take it back through the
+**Excluded parkings** filter, where hidden entries also appear as chips.
+
+```html
+<bolzano-parking-app parkings="103,104,105,112" excluded="104">
+```
+
+The ⋮ menu only appears while that filter is among the visible `filters`,
+because hiding something with no way to restore it is a trap. `card-actions="false"`
+removes it regardless.
+
 ### URL state
 
 On the **standalone site** the current filters are written to the query string
@@ -139,6 +175,8 @@ legal in a query value and escaping them only obscures the URL:
 | `origin` | data origins as the API names them |
 | `status` | `live`, `delayed`, `static` |
 | `parking` | station codes — what the API, the operators and the `parkings` attribute all use |
+| `excluded` | station codes to hide |
+| `language` | `eng`, `ita`, `deu`; omitted while it matches the browser's own choice |
 | `search` | free text |
 
 Parkings are written as station codes rather than internal ids; the store maps
@@ -216,7 +254,26 @@ Regenerate the bundled boundaries with:
 
 ```bash
 yarn geo:build    # ~2 min; caches ~250 MB of Overpass responses in .geo-cache/
+yarn geo:check    # seconds; does the committed asset still cover every parking?
 ```
+
+**The asset is committed, not built in CI**, so that a deploy never depends on
+Overpass being up. The cost is that it can go stale: the prune only keeps
+municipalities within ~9 km of parkings that existed when it last ran, so a
+parking appearing somewhere new — Munich, say, when today only 60 German
+municipalities are bundled — resolves to nothing. It still appears on the map and
+in the list, but with no municipality and absent from that filter.
+
+`yarn geo:check` catches exactly that: it resolves the live coordinates against
+the committed asset and fails if any cannot be placed. It runs advisory on every
+push and gates a weekly scheduled job, because staleness is an upstream data
+change and should not fail an unrelated PR. The fix is always `yarn geo:build`
+followed by committing `src/assets/data/`.
+
+`geo:build` is data-driven — it re-reads the live coordinates each run and
+re-derives the bounding box — so expansion within `CH,IT,AT,DE,FR,LI` needs no
+configuration, only a re-run. Only a parking outside those countries needs
+`--countries` extending.
 
 The script prunes Europe-wide boundaries down to the municipalities near real
 parkings, simplifies them, and fails the build if the asset exceeds its size

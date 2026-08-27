@@ -7,7 +7,10 @@ import { createPinia } from 'pinia'
 import { createI18n, I18nInjectionKey } from 'vue-i18n'
 
 import AppView from '@/components/AppView.vue'
-import en from '@/locales/en.json'
+import { DEFAULT_LOCALE, detectLocale } from '@/lib/locale.js'
+import eng from '@/locales/eng.json'
+import ita from '@/locales/ita.json'
+import deu from '@/locales/deu.json'
 
 // Imported as strings rather than stylesheets: the bundle is loaded as a plain
 // <script> by the webcomponent store, so there is no sibling CSS file to link.
@@ -28,9 +31,11 @@ export const ParkingAppElement = defineCustomElement(AppView, {
     const i18n = createI18n({
       legacy: false,
       globalInjection: true,
-      locale: 'en',
-      fallbackLocale: 'en',
-      messages: { en },
+      // The element may also carry a `language` attribute; AppView applies it
+      // once mounted, because attributes are not readable from here.
+      locale: detectLocale(),
+      fallbackLocale: DEFAULT_LOCALE,
+      messages: { eng, ita, deu },
     })
     app.use(i18n)
     // Inside a custom element vue-i18n resolves `useI18n()` through the public

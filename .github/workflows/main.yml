@@ -33,6 +33,14 @@ jobs:
       - name: Verify built bundle
         run: yarn verify:bundle
 
+      # Advisory only. The bundled boundaries can go stale when parkings appear
+      # in a new area, but that is an upstream data change — it must not fail
+      # the build of whoever happens to push next. The scheduled geo-check
+      # workflow is the one that gates.
+      - name: Municipality coverage (advisory)
+        run: yarn geo:check
+        continue-on-error: true
+
       - name: Test Webcomponent
         uses: noi-techpark/github-actions/webcomp-test@v2
         with:

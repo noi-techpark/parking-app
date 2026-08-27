@@ -75,12 +75,34 @@
         }
       },
       {
-        "key": "filters",
+        "key": "excluded",
         "type": "text",
-        "label": "Which filters the visitor may change, comma-separated: municipality, parking, origin, status. Use \"none\" to hide the filter bar completely and lock the view to whatever the settings above define.",
+        "label": "Never show these car parks, comma-separated station codes (e.g. \"103,105\"). Applied on top of every other setting, so a car park listed here stays hidden even if \"parkings\" names it.",
         "required": false,
         "options": {
-          "default": "municipality,parking,origin,status"
+          "default": ""
+        }
+      },
+      {
+        "key": "filters",
+        "type": "text",
+        "label": "Which filters the visitor may change, comma-separated: municipality, parking, origin, status, excluded. Use \"none\" to hide the filter bar completely and lock the view to whatever the settings above define.",
+        "required": false,
+        "options": {
+          "default": "municipality,parking,origin,status,excluded"
+        }
+      },
+      {
+        "key": "card-actions",
+        "type": "select",
+        "label": "Offer the per-card menu that lets a visitor hide a single car park. Ignored when the \"excluded\" filter is not among the visible filters, because a hidden car park could then never be restored.",
+        "required": false,
+        "options": {
+          "values": [
+            "true",
+            "false"
+          ],
+          "default": "true"
         }
       },
       {
@@ -135,13 +157,16 @@
       {
         "key": "language",
         "type": "select",
-        "label": "Interface language.",
+        "label": "Interface language as an ISO 639-3 code. Leave empty to follow the visitor's browser and let them switch; setting it pins the language and removes the switcher.",
         "required": false,
         "options": {
           "values": [
-            "en"
+            "",
+            "eng",
+            "ita",
+            "deu"
           ],
-          "default": "en"
+          "default": ""
         }
       },
       {

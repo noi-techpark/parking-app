@@ -60,11 +60,10 @@ export function useUrlState(fields, options = {}) {
 
     for (const [name, field] of entries) {
       const raw = params.get(name)
-      if (raw === null) {
-        field.ref.value = field.type === 'list' ? [] : ''
-        continue
-      }
-      const parsed = field.type === 'list' ? asList(raw) : raw
+      // An absent parameter still goes through `from`, so a field with a real
+      // default resets to that default rather than to empty.
+      const parsed =
+        raw === null ? (field.type === 'list' ? [] : '') : field.type === 'list' ? asList(raw) : raw
       field.ref.value = field.from ? field.from(parsed) : parsed
     }
   }

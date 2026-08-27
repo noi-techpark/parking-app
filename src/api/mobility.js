@@ -35,6 +35,14 @@ const METADATA_SELECT = [
   'smetadata.capacities',
   'smetadata.municipality',
   'smetadata.standard_name',
+  // Both casings: 67 stations spell it name_it, 20 name_IT, and the API only
+  // returns the path it is asked for.
+  'smetadata.name_it',
+  'smetadata.name_de',
+  'smetadata.name_en',
+  'smetadata.name_IT',
+  'smetadata.name_DE',
+  'smetadata.name_EN',
   'smetadata.group',
   'smetadata.displayName',
   'smetadata.address.city',

@@ -22,12 +22,14 @@ import VectorSource from 'ol/source/Vector'
 import Cluster from 'ol/source/Cluster'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
+import LineString from 'ol/geom/LineString'
 import GeoJSON from 'ol/format/GeoJSON'
 import { fromLonLat, transformExtent } from 'ol/proj'
 import { Circle, Fill, RegularShape, Stroke, Style, Text } from 'ol/style'
 import { defaults as defaultControls } from 'ol/control'
 
 import { availabilityLevel, CATEGORY, freeFraction, AVAILABILITY_KIND } from '@/lib/availability.js'
+import { STACK, fanOffset, stackKey, stackMode } from '@/lib/map-stack.js'
 import { markerColors, readThemeTokens } from '@/lib/theme.js'
 
 const props = defineProps({
@@ -43,8 +45,10 @@ const emit = defineEmits(['select', 'viewchange'])
 const container = ref(null)
 
 let map = null
+let markerLayer = null
 let markerSource = null
 let boundarySource = null
+let clusterSource = null
 let tokens = null
 
 // Below this the markers are clustered; above it every parking is drawn.
@@ -52,6 +56,17 @@ const CLUSTER_MAX_ZOOM = 13
 // Labels are noise when the whole country is on screen.
 const LABEL_MIN_ZOOM = 11
 const CLUSTER_DISTANCE = 44
+/*
+ * Above CLUSTER_MAX_ZOOM only markers that genuinely overlap stay grouped, so a
+ * "stack" always means "these share a position", never "these happen to be near
+ * each other at this zoom".
+ */
+const COINCIDENT_DISTANCE = 8
+
+/** Which stack is currently spiderfied, keyed by its members. */
+let spiderfiedKey = null
+
+const clusterKey = (members) => stackKey(members.map((m) => m.getId()))
 
 const geoJson = new GeoJSON({ featureProjection: 'EPSG:3857' })
 
@@ -81,7 +96,7 @@ function markerLabel(parking) {
   }
 }
 
-function parkingStyle(parking, zoom, selected) {
+function parkingStyle(parking, zoom, selected, index = 0, total = 1) {
   const level = availabilityLevel(parking)
   const colors = markerColors(tokens, level, parking.category)
   const radius = markerRadius(parking) * (selected ? 1.3 : 1)
@@ -111,8 +126,11 @@ function parkingStyle(parking, zoom, selected) {
           scale: [1, 0.5],
           fill,
           stroke,
+          displacement: fanOffset(index, total),
         })
-      : new Circle({ radius, fill, stroke })
+      : new Circle({ radius, fill, stroke, displacement: fanOffset(index, total) })
+
+  const [dx, dy] = fanOffset(index, total)
 
   return new Style({
     image,
@@ -121,6 +139,9 @@ function parkingStyle(parking, zoom, selected) {
           text: markerLabel(parking),
           font: `600 ${radius > 12 ? 12 : 10}px system-ui, sans-serif`,
           fill: new Fill({ color: colors.text }),
+          offsetX: dx,
+          // Text offsets grow downwards, image displacement upwards.
+          offsetY: -dy,
         })
       : undefined,
     zIndex: selected ? 1000 : Math.round(radius),
@@ -143,19 +164,67 @@ function clusterStyle(size) {
   })
 }
 
-function styleFor(feature) {
+function styleFor(feature, resolution) {
   const members = feature.get('features')
+  if (!members) return null
+
   const zoom = map.getView().getZoom() ?? 0
   const selected = new Set(props.selectedIds)
-
-  if (!members) return null
-  if (members.length === 1 || zoom >= CLUSTER_MAX_ZOOM) {
-    return members.map((member) => {
-      const parking = member.get('parking')
-      return parkingStyle(parking, zoom, selected.has(parking.id))
-    })
+  const single = (member, index = 0, total = 1) => {
+    const parking = member.get('parking')
+    return parkingStyle(parking, zoom, selected.has(parking.id), index, total)
   }
-  return clusterStyle(members.length)
+
+  const mode = stackMode({
+    memberCount: members.length,
+    zoom,
+    clusterMaxZoom: CLUSTER_MAX_ZOOM,
+    spiderfied: clusterKey(members) === spiderfiedKey,
+  })
+
+  if (mode === STACK.SINGLE) return [single(members[0])]
+  if (mode === STACK.CLUSTER) return clusterStyle(members.length)
+  if (mode === STACK.STACK) return stackStyle(members.length)
+
+  /*
+   * Overlapping markers keep their true position until asked. Fanning them out
+   * permanently draws every one of them somewhere it is not, with nothing on
+   * screen admitting it; the spider only distorts while the user is actively
+   * disambiguating, and the legs say where the markers really are.
+   */
+  const centre = feature.getGeometry().getCoordinates()
+  const styles = []
+  members.forEach((member, index) => {
+    const [dx, dy] = fanOffset(index, members.length)
+    styles.push(
+      new Style({
+        geometry: new LineString([
+          centre,
+          [centre[0] + dx * resolution, centre[1] + dy * resolution],
+        ]),
+        stroke: new Stroke({ color: tokens['color-ink-muted'], width: 1 }),
+        zIndex: 900,
+      })
+    )
+    styles.push(single(member, index, members.length))
+  })
+  return styles
+}
+
+/** A group of markers sharing a position, collapsed to one. */
+function stackStyle(size) {
+  return new Style({
+    image: new Circle({
+      radius: 13,
+      fill: new Fill({ color: tokens['color-surface'] }),
+      stroke: new Stroke({ color: tokens['color-primary-strong'], width: 2 }),
+    }),
+    text: new Text({
+      text: String(size),
+      font: '600 12px system-ui, sans-serif',
+      fill: new Fill({ color: tokens['color-ink'] }),
+    }),
+  })
 }
 
 const boundaryStyle = () =>
@@ -164,54 +233,18 @@ const boundaryStyle = () =>
     fill: new Fill({ color: 'rgba(0, 156, 221, 0.06)' }),
   })
 
-/**
- * Fans co-located markers out around a small circle. Several operators publish
- * different parkings at the identical coordinate, which would otherwise hide
- * all but the topmost.
- */
-function spread(parkings) {
-  const byPosition = new Map()
-  for (const parking of parkings) {
-    const key = `${parking.coord.lon},${parking.coord.lat}`
-    const bucket = byPosition.get(key)
-    if (bucket) bucket.push(parking)
-    else byPosition.set(key, [parking])
-  }
-
-  const placed = []
-  for (const bucket of byPosition.values()) {
-    if (bucket.length === 1) {
-      placed.push({ parking: bucket[0], lon: bucket[0].coord.lon, lat: bucket[0].coord.lat })
-      continue
-    }
-    const separation = 0.00005
-    const circumference = separation * (2 + bucket.length)
-    const radius = circumference / (Math.PI * 2)
-    const step = (Math.PI * 2) / bucket.length
-    bucket.forEach((parking, i) => {
-      const angle = Math.PI / 6 + i * step
-      placed.push({
-        parking,
-        lon: parking.coord.lon + radius * Math.cos(angle),
-        lat: parking.coord.lat + radius * Math.sin(angle),
-      })
-    })
-  }
-  return placed
-}
-
 function syncMarkers() {
   if (!markerSource) return
-  const features = spread(
-    props.parkings.filter(
-      (p) => Number.isFinite(p.coord?.lon) && Number.isFinite(p.coord?.lat)
-    )
-  ).map(({ parking, lon, lat }) => {
-    const feature = new Feature({ geometry: new Point(fromLonLat([lon, lat])) })
-    feature.setId(parking.id)
-    feature.set('parking', parking)
-    return feature
-  })
+  const features = props.parkings
+    .filter((p) => Number.isFinite(p.coord?.lon) && Number.isFinite(p.coord?.lat))
+    .map((parking) => {
+      const feature = new Feature({
+        geometry: new Point(fromLonLat([parking.coord.lon, parking.coord.lat])),
+      })
+      feature.setId(parking.id)
+      feature.set('parking', parking)
+      return feature
+    })
 
   markerSource.clear()
   markerSource.addFeatures(features)
@@ -230,13 +263,30 @@ function onClick(event) {
   const hit = map.forEachFeatureAtPixel(event.pixel, (feature) => feature, {
     hitTolerance: 4,
   })
-  if (!hit) return
+
+  const collapse = () => {
+    if (spiderfiedKey === null) return
+    spiderfiedKey = null
+    markerLayer.changed()
+  }
+
+  if (!hit) {
+    collapse()
+    return
+  }
 
   const members = hit.get('features')
   if (!members) return
 
+  if (members.length === 1) {
+    collapse()
+    emit('select', members[0].get('parking'))
+    return
+  }
+
   const zoom = map.getView().getZoom() ?? 0
-  if (members.length > 1 && zoom < CLUSTER_MAX_ZOOM) {
+  if (zoom < CLUSTER_MAX_ZOOM) {
+    collapse()
     // Zoom into the cluster rather than guessing which member was meant.
     const extent = members
       .map((m) => m.getGeometry().getCoordinates())
@@ -253,7 +303,40 @@ function onClick(event) {
     return
   }
 
-  emit('select', members[0].get('parking'))
+  const key = clusterKey(members)
+  if (spiderfiedKey !== key) {
+    spiderfiedKey = key
+    markerLayer.changed()
+    return
+  }
+
+  emit('select', pickMember(members, event.pixel).get('parking'))
+}
+
+/**
+ * Which of a stacked group was actually clicked.
+ *
+ * The whole group shares one geometry, so the click pixel has to be matched
+ * against the fan slots — otherwise every marker in a stack selects the first
+ * member, which is what made the two Costabella car parks indistinguishable.
+ */
+function pickMember(members, pixel) {
+  if (members.length === 1) return members[0]
+
+  const base = map.getPixelFromCoordinate(members[0].getGeometry().getCoordinates())
+  if (!base) return members[0]
+
+  let best = members[0]
+  let bestDistance = Infinity
+  members.forEach((member, index) => {
+    const [dx, dy] = fanOffset(index, members.length)
+    const distance = (pixel[0] - base[0] - dx) ** 2 + (pixel[1] - base[1] + dy) ** 2
+    if (distance < bestDistance) {
+      bestDistance = distance
+      best = member
+    }
+  })
+  return best
 }
 
 /**
@@ -334,10 +417,13 @@ onMounted(() => {
         }),
       }),
       new VectorLayer({ source: boundarySource, style: boundaryStyle }),
-      new VectorLayer({
-        source: new Cluster({ distance: CLUSTER_DISTANCE, source: markerSource }),
+      (markerLayer = new VectorLayer({
+        source: (clusterSource = new Cluster({
+          distance: CLUSTER_DISTANCE,
+          source: markerSource,
+        })),
         style: styleFor,
-      }),
+      })),
     ],
     view: new View({
       center: fromLonLat([11.35, 46.5]),
@@ -349,7 +435,13 @@ onMounted(() => {
   map.on('singleclick', onClick)
   map.on('moveend', () => {
     const view = map.getView()
-    emit('viewchange', { zoom: view.getZoom(), center: view.getCenter() })
+    const zoom = view.getZoom() ?? 0
+    const distance = zoom >= CLUSTER_MAX_ZOOM ? COINCIDENT_DISTANCE : CLUSTER_DISTANCE
+    if (clusterSource.getDistance() !== distance) {
+      spiderfiedKey = null
+      clusterSource.setDistance(distance)
+    }
+    emit('viewchange', { zoom, center: view.getCenter() })
   })
 
   syncMarkers()

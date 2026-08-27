@@ -26,7 +26,12 @@
     "results": "No parkings | 1 parking | {count} parkings",
     "removeFilter": "Remove filter {name}",
     "parkings": "Specific parkings",
-    "searchParking": "Find a parking"
+    "searchParking": "Find a parking",
+    "language": "Language",
+    "excluded": "Excluded parkings",
+    "searchExcluded": "Find a parking to exclude",
+    "noneExcluded": "None",
+    "hiddenChip": "Hidden: {name}"
   },
   "status": {
     "live": "Live",
@@ -72,7 +77,9 @@
     "poi": "Parking area",
     "now": "now",
     "inMinutes": "+{value} min",
-    "spacesTotal": "{count} space | {count} spaces"
+    "spacesTotal": "{count} space | {count} spaces",
+    "actions": "More actions",
+    "hide": "Hide this parking"
   },
   "map": {
     "label": "Map of parkings",

@@ -349,3 +349,52 @@ describe('forecast series', () => {
     expect(series.some((p) => p.free === 366)).toBe(false)
   })
 })
+
+describe('localised station names', () => {
+  const rows = [
+    {
+      scode: 'L1',
+      sname: 'Parkplatz Nord',
+      'smetadata.standard_name': 'Parcheggio Nord',
+      'smetadata.name_de': 'Nordparkplatz',
+      'smetadata.name_it': 'Parcheggio Nord IT',
+      scoordinate: { x: 11.3, y: 46.5 },
+    },
+    {
+      // Casing is inconsistent upstream: 67 stations use name_it, 20 name_IT.
+      scode: 'L2',
+      sname: 'Sud',
+      'smetadata.name_IT': 'Parcheggio Sud',
+      scoordinate: { x: 11.3, y: 46.5 },
+    },
+    {
+      // 11 FBK stations publish these literal placeholders as their names.
+      scode: 'L3',
+      sname: 'FBK Povo',
+      'smetadata.name_it': 'test-it',
+      'smetadata.name_de': 'test-de',
+      scoordinate: { x: 11.3, y: 46.5 },
+    },
+  ]
+
+  const nameOf = (locale, scode) => buildStationIndex(rows, locale).get(scode).name
+
+  it('prefers the requested language over the standard name', () => {
+    expect(nameOf('de', 'L1')).toBe('Nordparkplatz')
+    expect(nameOf('it', 'L1')).toBe('Parcheggio Nord IT')
+  })
+
+  it('falls back through standard_name to sname', () => {
+    expect(nameOf('en', 'L1')).toBe('Parcheggio Nord')
+    expect(nameOf('de', 'L2')).toBe('Sud')
+  })
+
+  it('reads the field whichever way it is cased', () => {
+    expect(nameOf('it', 'L2')).toBe('Parcheggio Sud')
+  })
+
+  it('never shows the upstream test placeholders', () => {
+    expect(nameOf('it', 'L3')).toBe('FBK Povo')
+    expect(nameOf('de', 'L3')).toBe('FBK Povo')
+  })
+})

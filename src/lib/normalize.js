@@ -80,8 +80,32 @@ function capacityOf(row) {
   return Number.isFinite(capacity) ? capacity : null
 }
 
-function nameOf(row) {
+/*
+ * FBK publishes the literal strings "test-it", "test-de" and "test-en" as the
+ * localised names of 11 stations. Taking them at face value renders a car park
+ * called "test-it", so the guard is deliberately narrow: only this exact shape
+ * is rejected, never a heuristic that might discard a real name.
+ */
+const PLACEHOLDER_NAME = /^test[-_ ]?(it|de|en|ita|deu|eng)$/i
+
+function localizedName(row, iso1) {
+  if (!iso1) return null
+  const value = metaField(row, `name_${iso1}`) ?? metaField(row, `name_${iso1.toUpperCase()}`)
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed && !PLACEHOLDER_NAME.test(trimmed) ? trimmed : null
+}
+
+/**
+ * The station's name in the requested language.
+ *
+ * Only 87 of 906 stations publish a localised name at all, so `standard_name`
+ * and `sname` carry almost everything; the localised field wins where it exists
+ * because that is the whole point of the language switch.
+ */
+function nameOf(row, iso1) {
   return (
+    localizedName(row, iso1) ||
     metaField(row, 'standard_name') ||
     row.sname ||
     metaField(row, 'displayName') ||
@@ -115,7 +139,7 @@ function isSupersededRow(row) {
  * position and capacity. Fetched once, because none of it changes minute to
  * minute — see api/mobility.js for why that split matters.
  */
-export function buildStationIndex(metadataRows = []) {
+export function buildStationIndex(metadataRows = [], iso1 = 'en') {
   const byCode = new Map()
 
   for (const row of metadataRows) {
@@ -134,7 +158,7 @@ export function buildStationIndex(metadataRows = []) {
       scode: row.scode,
       source: 'station',
       origin: row.sorigin ?? null,
-      name: nameOf(row),
+      name: nameOf(row, iso1),
       coord: {
         lon: row.scoordinate?.x ?? null,
         lat: row.scoordinate?.y ?? null,

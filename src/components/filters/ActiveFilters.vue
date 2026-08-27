@@ -16,7 +16,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
           :aria-label="t('filters.removeFilter', { name: chip.label })"
           @click="$emit('remove', chip)"
         >
-          {{ chip.label }}
+          <span class="label">{{ chip.label }}</span>
           <span class="x" aria-hidden="true">×</span>
         </button>
       </li>
@@ -73,22 +73,35 @@ const { t } = useI18n()
   list-style: none;
 }
 
+/* Flex items refuse to shrink below their content by default, so without this
+   a long label pushes the chip — and its × — past the rail. */
+.active-filters .chips > li {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .active-filters .chip {
   display: inline-flex;
   gap: 0.25rem;
   align-items: center;
-  max-width: 12rem;
+  max-width: 100%;
   padding: 0.125rem 0.25rem 0.125rem 0.5rem;
-  overflow: hidden;
   font: inherit;
   font-size: 0.75rem;
   color: var(--color-ink);
-  text-overflow: ellipsis;
-  white-space: nowrap;
   cursor: pointer;
   background: var(--color-primary-soft);
   border: 1px solid var(--color-primary);
   border-radius: 999px;
+}
+
+/* Truncation has to happen on the text itself: text-overflow does nothing for
+   a flex container's own text, and the × was being pushed out of view. */
+.active-filters .chip .label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .active-filters .chip:hover {
@@ -96,6 +109,7 @@ const { t } = useI18n()
 }
 
 .active-filters .chip .x {
+  flex: none;
   font-size: 0.875rem;
   line-height: 1;
   color: var(--color-primary-strong);

@@ -45,7 +45,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       />
 
       <!-- Filters live over the map so they cost no layout space. -->
-      <div v-if="facets.length" class="filter-bar">
+      <div v-if="facets.length || showLanguagePicker" class="filter-bar">
+        <LanguagePicker v-if="showLanguagePicker" v-model="activeLocale" />
+
         <div v-for="facet in facets" :key="facet.key" class="filter-slot">
           <FilterPill
             :title="facet.title"
@@ -67,7 +69,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
               :options="facet.options"
               :selected="facet.selected"
               :searchable="facet.searchable"
-              :search-placeholder="facet.searchPlaceholder ?? t('filters.searchMunicipality')"
+              :search-placeholder="
+                facet.searchPlaceholder ?? t('filters.searchMunicipality')
+              "
               :limit="facet.searchable ? 40 : 12"
               hide-header
               @toggle="facet.toggle"
@@ -78,7 +82,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       </div>
     </div>
 
-    <BottomSheet v-if="layout === 'narrow'" ref="sheetRef" :label="t('filters.title')">
+    <BottomSheet
+      v-if="layout === 'narrow'"
+      ref="sheetRef"
+      :label="t('filters.title')"
+    >
       <header class="sheet-head">
         <input
           v-model="store.searchTerm"
@@ -100,7 +108,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 </template>
 
 <script setup>
-import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  computed,
+  h,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppBrand from '@/components/chrome/AppBrand.vue'
@@ -108,6 +124,7 @@ import FacetList from '@/components/filters/FacetList.vue'
 import FilterPill from '@/components/filters/FilterPill.vue'
 import FilterPanel from '@/components/filters/FilterPanel.vue'
 import ActiveFilters from '@/components/filters/ActiveFilters.vue'
+import LanguagePicker from '@/components/filters/LanguagePicker.vue'
 import MapCanvas from '@/components/map/MapCanvas.vue'
 import BottomSheet from '@/components/layout/BottomSheet.vue'
 import ParkingCard from '@/components/parking/ParkingCard.vue'
@@ -117,8 +134,14 @@ import { useParkingStore, DEFAULTS } from '@/stores/parkings.js'
 import { CATEGORY } from '@/lib/availability.js'
 import { boundsOf, compositeCentroidOf } from '@/lib/geo/municipalities.js'
 import { parseDuration } from '@/lib/duration.js'
-import { parseBool, parseList, parseLonLat, parseNumber } from '@/lib/attributes.js'
+import {
+  parseBool,
+  parseList,
+  parseLonLat,
+  parseNumber,
+} from '@/lib/attributes.js'
 import { IS_STANDALONE } from '@/lib/config.js'
+import { detectLocale, normalizeLocale } from '@/lib/locale.js'
 import { useUrlState } from '@/composables/useUrlState.js'
 
 /**
@@ -140,20 +163,48 @@ const props = defineProps({
    * entirely — which is how a preconfigured dashboard is locked down, since
    * restricting a filter to single-select still leaves it changeable.
    */
-  filters: { type: String, default: 'municipality,parking,origin,status' },
+  filters: {
+    type: String,
+    default: 'municipality,parking,origin,status,excluded',
+  },
+  /** Station codes to hide outright. Beats `parkings` where the two overlap. */
+  excluded: { type: String, default: '' },
+  /**
+   * The per-card ⋮ menu. Defaults on, but only where the exclusion filter is
+   * also exposed — hiding a parking with no way to bring it back is a trap.
+   */
+  cardActions: { type: String, default: 'true' },
   /** Seeds the free-text search box. */
   search: { type: String, default: '' },
   staleMaxAge: { type: String, default: DEFAULTS.staleMaxAge },
   liveMaxAge: { type: String, default: DEFAULTS.liveMaxAge },
   refreshInterval: { type: String, default: DEFAULTS.refreshInterval },
   showStatic: { type: String, default: 'true' },
-  language: { type: String, default: 'en' },
+  /**
+   * ISO 639-3 (`eng`, `ita`, `deu`). Empty means follow the browser and offer
+   * the picker; setting it pins the language and removes the picker, which is
+   * what an embedder wants when the host page already has its own switch.
+   */
+  language: { type: String, default: '' },
   center: { type: String, default: '' },
   zoom: { type: String, default: '' },
 })
 
 const { t, locale } = useI18n()
 const store = useParkingStore()
+
+const forcedLocale = computed(() => normalizeLocale(props.language))
+
+/**
+ * The single source of truth for the language, written to by the picker and by
+ * the URL. `locale` is vue-i18n's own ref; keeping ours separate means a forced
+ * value cannot be overwritten by a stale URL parameter.
+ */
+const activeLocale = ref(forcedLocale.value ?? detectLocale())
+
+// Never offered where there is no URL to remember the choice in, and never
+// when the embedder has pinned the language.
+const showLanguagePicker = IS_STANDALONE && !forcedLocale.value
 
 const root = ref(null)
 const mapRef = ref(null)
@@ -180,13 +231,21 @@ let clock = null
 let observer = null
 
 const selected = computed(() =>
-  store.parkings.find((p) => p.id === store.focusedParkingId)
+  store.parkings.find((p) => p.id === store.focusedParkingId),
 )
 
 const statusOptions = computed(() => [
   { id: CATEGORY.LIVE, name: t('status.live'), count: store.counts.live ?? 0 },
-  { id: CATEGORY.DELAYED, name: t('status.delayed'), count: store.counts.delayed ?? 0 },
-  { id: CATEGORY.STATIC, name: t('status.static'), count: store.counts.static ?? 0 },
+  {
+    id: CATEGORY.DELAYED,
+    name: t('status.delayed'),
+    count: store.counts.delayed ?? 0,
+  },
+  {
+    id: CATEGORY.STATIC,
+    name: t('status.static'),
+    count: store.counts.static ?? 0,
+  },
 ])
 
 /** The facets this embed is allowed to expose; `none` hides the bar. */
@@ -236,6 +295,25 @@ const allFacets = computed(() => [
     },
   },
   {
+    key: 'excluded',
+    title: t('filters.excluded'),
+    options: store.parkingOptions,
+    selected: store.excludedParkingIds,
+    searchable: true,
+    searchPlaceholder: t('filters.searchExcluded'),
+    // "All" would read as "everything is hidden"; an empty exclusion list is
+    // the opposite of an empty inclusion list.
+    value: store.excludedParkingIds.length
+      ? summarise(store.excludedParkingIds, store.parkingOptions)
+      : t('filters.noneExcluded'),
+    toggle: (id) => store.toggleExcluded(id),
+    // Without this an exclusion chip is indistinguishable from an inclusion.
+    chipLabel: (name) => t('filters.hiddenChip', { name }),
+    clear: () => {
+      store.excludedParkingIds = []
+    },
+  },
+  {
     key: 'status',
     title: t('filters.status'),
     options: statusOptions.value,
@@ -250,7 +328,11 @@ const allFacets = computed(() => [
 ])
 
 const facets = computed(() =>
-  allFacets.value.filter((facet) => enabledFacets.value.has(facet.key))
+  allFacets.value.filter((facet) => enabledFacets.value.has(facet.key)),
+)
+const showCardActions = computed(
+  () =>
+    parseBool(props.cardActions, true) && enabledFacets.value.has('excluded'),
 )
 
 /** A pill always states its selection: a name, a count, or "all". */
@@ -268,10 +350,21 @@ const chips = computed(() =>
     facet.selected.map((id) => ({
       facet: facet.key,
       id,
-      label: facet.options.find((o) => o.id === id)?.name ?? id,
-    }))
-  )
+      label: (() => {
+        const name = facet.options.find((o) => o.id === id)?.name ?? id
+        return facet.chipLabel ? facet.chipLabel(name) : name
+      })(),
+    })),
+  ),
 )
+
+/** The ⋮ menu's only action; the exclusion filter is where it is undone. */
+function onHideParking(parking) {
+  if (!store.excludedParkingIds.includes(parking.id)) {
+    store.excludedParkingIds = [...store.excludedParkingIds, parking.id]
+  }
+  if (store.focusedParkingId === parking.id) store.focusedParkingId = null
+}
 
 function removeChip(chip) {
   facets.value.find((f) => f.key === chip.facet)?.toggle(chip.id)
@@ -304,7 +397,7 @@ const listed = computed(() => {
 const highlightedIds = computed(() =>
   store.focusedParkingId
     ? [...store.selectedParkingIds, store.focusedParkingId]
-    : store.selectedParkingIds
+    : store.selectedParkingIds,
 )
 
 const selectedBoundaries = computed(() => {
@@ -330,7 +423,8 @@ function toggleStatus(id) {
 // Selecting opens the detail; it does not add to the dashboard selection, which
 // is what the "specific parkings" filter is for.
 function onSelectParking(parking, { fromMap = false } = {}) {
-  store.focusedParkingId = store.focusedParkingId === parking.id ? null : parking.id
+  store.focusedParkingId =
+    store.focusedParkingId === parking.id ? null : parking.id
   if (!store.focusedParkingId) return
 
   store.loadForecast(parking.id)
@@ -373,7 +467,7 @@ const panelInner = computed(() => () => {
       h(
         'button',
         { type: 'button', onClick: () => store.refresh({ force: true }) },
-        t('common.retry')
+        t('common.retry'),
       ),
     ])
   }
@@ -390,31 +484,33 @@ const panelInner = computed(() => () => {
     'div',
     { class: 'list', style: { '--list-columns': listColumns.value } },
     [
-    ...listed.value.slice(0, renderLimit.value).map((parking) =>
-      h(ParkingCard, {
-        key: parking.id,
-        parking,
-        now: now.value,
-        selected:
-          parking.id === store.focusedParkingId ||
-          store.selectedParkingIds.includes(parking.id),
-        onSelect: onSelectParking,
-      })
-    ),
-    listed.value.length > renderLimit.value
-      ? h(
-          'button',
-          {
-            type: 'button',
-            class: 'load-more',
-            onClick: () => {
-              renderLimit.value += PAGE
+      ...listed.value.slice(0, renderLimit.value).map((parking) =>
+        h(ParkingCard, {
+          key: parking.id,
+          parking,
+          now: now.value,
+          selected:
+            parking.id === store.focusedParkingId ||
+            store.selectedParkingIds.includes(parking.id),
+          actions: showCardActions.value,
+          onSelect: onSelectParking,
+          onHide: onHideParking,
+        }),
+      ),
+      listed.value.length > renderLimit.value
+        ? h(
+            'button',
+            {
+              type: 'button',
+              class: 'load-more',
+              onClick: () => {
+                renderLimit.value += PAGE
+              },
             },
-          },
-          t('filters.showMore', { count: listed.value.length })
-        )
-      : null,
-    ]
+            t('filters.showMore', { count: listed.value.length }),
+          )
+        : null,
+    ],
   )
 })
 
@@ -425,15 +521,21 @@ watch(listed, () => {
 })
 
 function applyConfig() {
-  locale.value = props.language || 'en'
+  locale.value = activeLocale.value
   store.configure({
-    liveMaxAge: parseDuration(props.liveMaxAge, parseDuration(DEFAULTS.liveMaxAge)),
-    staleMaxAge: parseDuration(props.staleMaxAge, parseDuration(DEFAULTS.staleMaxAge)),
+    liveMaxAge: parseDuration(
+      props.liveMaxAge,
+      parseDuration(DEFAULTS.liveMaxAge),
+    ),
+    staleMaxAge: parseDuration(
+      props.staleMaxAge,
+      parseDuration(DEFAULTS.staleMaxAge),
+    ),
     refreshInterval: parseDuration(
       props.refreshInterval,
-      parseDuration(DEFAULTS.refreshInterval)
+      parseDuration(DEFAULTS.refreshInterval),
     ),
-    locale: props.language || 'en',
+    locale: activeLocale.value,
     showStatic: showStaticEnabled.value,
     originFilter: parseList(props.origins),
   })
@@ -457,7 +559,7 @@ function fitCamera() {
     const span = zoom ? 0.02 : 0.15
     map.fitBounds(
       [centre[0] - span, centre[1] - span, centre[0] + span, centre[1] + span],
-      { maxZoom: zoom ?? 14 }
+      { maxZoom: zoom ?? 14 },
     )
     return
   }
@@ -503,7 +605,7 @@ const urlState = IS_STANDALONE
           () => store.selectedMunicipalityIds,
           (v) => {
             store.selectedMunicipalityIds = v
-          }
+          },
         ),
         type: 'list',
       },
@@ -512,7 +614,7 @@ const urlState = IS_STANDALONE
           () => store.selectedOrigins,
           (v) => {
             store.selectedOrigins = v
-          }
+          },
         ),
         type: 'list',
       },
@@ -525,7 +627,17 @@ const urlState = IS_STANDALONE
           () => store.selectedParkingIds,
           (v) => {
             store.selectedParkingIds = v
-          }
+          },
+        ),
+        type: 'list',
+        to: (ids) => store.scodesFor(ids),
+      },
+      excluded: {
+        ref: writable(
+          () => store.excludedParkingIds,
+          (v) => {
+            store.excludedParkingIds = v
+          },
         ),
         type: 'list',
         to: (ids) => store.scodesFor(ids),
@@ -535,10 +647,24 @@ const urlState = IS_STANDALONE
           () => store.searchTerm,
           (v) => {
             store.searchTerm = v
-          }
+          },
         ),
         type: 'string',
       },
+      // Only mirrored while the visitor can actually change it: a forced
+      // language must not be overwritten by whatever the URL happens to say.
+      ...(showLanguagePicker && {
+        language: {
+          ref: activeLocale,
+          type: 'string',
+          // An unsupported or absent value has to fall back rather than blank the
+          // interface, and the default is the browser's, not a fixed language.
+          from: (value) => normalizeLocale(value) ?? detectLocale(),
+          // Omitted while it matches what the browser would have chosen, so a
+          // shared link only pins the language when that was a deliberate choice.
+          to: (value) => (value === detectLocale() ? '' : value),
+        },
+      }),
     })
   : null
 
@@ -562,7 +688,8 @@ onMounted(async () => {
   const wantedMunicipalities = parseList(props.municipalities)
   if (wantedMunicipalities.length && !store.selectedMunicipalityIds.length) {
     // Accepts ids, official names and any language variant.
-    store.selectedMunicipalityIds = store.municipalityIdsFor(wantedMunicipalities)
+    store.selectedMunicipalityIds =
+      store.municipalityIdsFor(wantedMunicipalities)
   }
   const wantedParkings = parseList(props.parkings)
   if (wantedParkings.length && !store.selectedParkingIds.length) {
@@ -572,10 +699,15 @@ onMounted(async () => {
 
   // Unknown status values are dropped rather than filtering everything away.
   const wantedStatuses = parseList(props.status).filter((value) =>
-    Object.values(CATEGORY).includes(value)
+    Object.values(CATEGORY).includes(value),
   )
   if (wantedStatuses.length && !selectedStatuses.value.length) {
     selectedStatuses.value = wantedStatuses
+  }
+
+  const wantedExclusions = parseList(props.excluded)
+  if (wantedExclusions.length && !store.excludedParkingIds.length) {
+    store.excludedParkingIds = wantedExclusions
   }
 
   if (props.search && !store.searchTerm) store.searchTerm = props.search
@@ -592,7 +724,19 @@ onBeforeUnmount(() => {
   clock = null
 })
 
-watch(() => [props.language, props.liveMaxAge, props.staleMaxAge, props.showStatic], applyConfig)
+watch(
+  () => [
+    activeLocale.value,
+    props.liveMaxAge,
+    props.staleMaxAge,
+    props.showStatic,
+  ],
+  applyConfig,
+)
+
+watch(forcedLocale, (forced) => {
+  if (forced) activeLocale.value = forced
+})
 
 /**
  * Recentre whenever the user changes what they have selected.
@@ -608,7 +752,7 @@ const selectionKey = computed(() =>
     store.selectedParkingIds.join(','),
     store.selectedOrigins.join(','),
     selectedStatuses.value.join(','),
-  ].join('|')
+  ].join('|'),
 )
 
 watch(selectionKey, () => {

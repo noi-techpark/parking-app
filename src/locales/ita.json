@@ -1,0 +1,89 @@
+{
+  "common": {
+    "appName": "Parcheggi in tempo reale",
+    "loading": "Caricamento",
+    "poweredBy": "Realizzato con",
+    "retry": "Riprova",
+    "clear": "Azzera",
+    "clearAll": "Azzera tutto",
+    "close": "Chiudi",
+    "search": "Cerca parcheggi o località",
+    "noResults": "Nessun parcheggio corrisponde a questi filtri.",
+    "loadFailed": "Impossibile caricare i dati dei parcheggi.",
+    "done": "Fatto"
+  },
+  "filters": {
+    "title": "Filtri",
+    "municipalities": "Comuni",
+    "origins": "Fonti dati",
+    "status": "Stato",
+    "searchMunicipality": "Cerca un comune",
+    "selectedCount": "{count} selezionati",
+    "showMore": "Mostra tutti ({count})",
+    "showLess": "Mostra meno",
+    "none": "Ancora nulla da filtrare",
+    "all": "Tutti",
+    "results": "Nessun parcheggio | 1 parcheggio | {count} parcheggi",
+    "removeFilter": "Rimuovi filtro {name}",
+    "parkings": "Parcheggi specifici",
+    "searchParking": "Cerca un parcheggio",
+    "language": "Lingua",
+    "excluded": "Parcheggi esclusi",
+    "searchExcluded": "Cerca un parcheggio da escludere",
+    "noneExcluded": "Nessuno",
+    "hiddenChip": "Nascosto: {name}"
+  },
+  "status": {
+    "live": "In tempo reale",
+    "delayed": "In ritardo",
+    "static": "Senza dati live",
+    "liveHint": "Aggiornato negli ultimi {age}",
+    "delayedHint": "Fonte in tempo reale, ma l'ultima lettura è vecchia",
+    "staticHint": "Solo posizione — questo parcheggio non comunica la disponibilità"
+  },
+  "availability": {
+    "free": "liberi",
+    "freeOf": "{free} di {capacity} liberi",
+    "percentFree": "{percent}% liberi",
+    "occupancyLow": "Tranquillo",
+    "occupancyMedium": "Si sta riempiendo",
+    "occupancyHigh": "Quasi pieno",
+    "unknownCapacity": "Capienza non pubblicata",
+    "noRealtime": "Nessun dato in tempo reale",
+    "full": "Pieno",
+    "noData": "nessun dato"
+  },
+  "staleness": {
+    "updatedSecondsAgo": "Aggiornato {value} s fa | Aggiornato {value} s fa",
+    "updatedMinutesAgo": "Aggiornato un minuto fa | Aggiornato {value} minuti fa",
+    "updatedHoursAgo": "Aggiornato un'ora fa | Aggiornato {value} ore fa",
+    "updatedDaysAgo": "Aggiornato ieri | Aggiornato {value} giorni fa",
+    "staleWarning": "Questa lettura non è aggiornata",
+    "never": "Mai aggiornato"
+  },
+  "detail": {
+    "capacity": "Capienza",
+    "source": "Fonte",
+    "municipality": "Comune",
+    "approximate": "Posizione approssimativa",
+    "forecast": "Disponibilità prevista",
+    "forecastNone": "Nessuna previsione per questo parcheggio",
+    "forecastLoading": "Caricamento previsione…",
+    "forecastRange": "Intervallo previsto",
+    "navigate": "Indicazioni",
+    "spaces": "posti",
+    "onStreet": "Parcheggio su strada",
+    "station": "Parcheggio",
+    "poi": "Area di sosta",
+    "now": "ora",
+    "inMinutes": "+{value} min",
+    "spacesTotal": "{count} posto | {count} posti",
+    "actions": "Altre azioni",
+    "hide": "Nascondi questo parcheggio"
+  },
+  "map": {
+    "label": "Mappa dei parcheggi",
+    "fitSelection": "Inquadra la selezione",
+    "resetView": "Mostra tutto"
+  }
+}

@@ -18,7 +18,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
       <span class="glyph" aria-hidden="true">☰</span>
       {{ title }}
     </span>
-    <span class="value">{{ value }}</span>
+    <span class="value"><span class="value-text">{{ value }}</span></span>
   </button>
 </template>
 
@@ -78,11 +78,20 @@ defineEmits(['toggle'])
 .filter-pill .value {
   display: inline-flex;
   align-items: center;
+  /* A single selected parking's name can be longer than the whole filter bar. */
+  max-width: 12rem;
   padding: 0.375rem 0.5rem;
   white-space: nowrap;
   background: var(--color-surface-sunken);
   border: 1px solid var(--color-border);
   border-radius: 0 var(--radius-card) var(--radius-card) 0;
+}
+
+/* On the text, not the box: text-overflow does nothing for a flex container. */
+.filter-pill .value-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .filter-pill--active .value {

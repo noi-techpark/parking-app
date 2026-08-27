@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 
 import {
   fetchStationMetadata,
@@ -28,6 +28,7 @@ import {
   municipalityDisplayName,
 } from '../lib/geo/municipalities.js'
 import { parseDuration } from '../lib/duration.js'
+import { DEFAULT_LOCALE, toIso1 } from '../lib/locale.js'
 
 export const DEFAULTS = {
   /** How recent a reading has to be to count as real time. */
@@ -46,7 +47,7 @@ export const useParkingStore = defineStore('parkings', () => {
     staleMaxAge: parseDuration(DEFAULTS.staleMaxAge),
     refreshInterval: parseDuration(DEFAULTS.refreshInterval),
     metadataInterval: parseDuration(DEFAULTS.metadataInterval),
-    locale: 'en',
+    locale: DEFAULT_LOCALE,
     showStatic: true,
     originFilter: [],
   })
@@ -79,10 +80,20 @@ export const useParkingStore = defineStore('parkings', () => {
   /** The one parking whose detail panel is open, if any. */
   const focusedParkingId = ref(null)
   const selectedOrigins = ref([])
+  /**
+   * Parkings the visitor never wants to see.
+   *
+   * Always wins over every other filter, including an explicit parking
+   * selection — hiding something has to mean hiding it, or the control is not
+   * trustworthy.
+   */
+  const excludedParkingIds = ref([])
   const searchTerm = ref('')
 
   // Kept out of reactive state: fetched once, mutated in place.
   let stationIndex = new Map()
+  // Kept so a language change can rename everything without another round-trip.
+  let metadataRows = null
   let poiItems = null
   let geo = null
   let resolveMunicipality = null
@@ -98,11 +109,27 @@ export const useParkingStore = defineStore('parkings', () => {
   let forecastSeries = new Map()
   // Low/high bands, fetched per station only when a detail view opens.
   const forecastBands = new Map()
+  let lastValueRows = null
+  let lastSensorRows = null
   let timer = null
   let controller = null
 
   function configure(patch = {}) {
+    const previousLocale = config.value.locale
     config.value = { ...config.value, ...patch }
+
+    // Station and POI names are language-dependent, so a locale change has to
+    // rebuild them — from the metadata already in hand, not a new request.
+    if (patch.locale && patch.locale !== previousLocale) relabel()
+  }
+
+  function relabel() {
+    if (!metadataRows) return
+    stationIndex = buildStationIndex(metadataRows, toIso1(config.value.locale))
+    if (lastValueRows) {
+      parkings.value = decorate(combineSources(lastValueRows, lastSensorRows), Date.now())
+      municipalities.value = collectMunicipalities(parkings.value)
+    }
   }
 
   /**
@@ -159,7 +186,7 @@ export const useParkingStore = defineStore('parkings', () => {
   }
 
   function localisedMunicipalityName(id) {
-    return municipalityDisplayName(geo?.byId.get(id), config.value.locale)
+    return municipalityDisplayName(geo?.byId.get(id), toIso1(config.value.locale))
   }
 
   /** Municipalities that actually contain a visible parking. */
@@ -182,12 +209,23 @@ export const useParkingStore = defineStore('parkings', () => {
     return [...counts.values()].sort((a, b) => a.name.localeCompare(b.name))
   }
 
+  /** The three feeds, normalised and merged into one list. */
+  function combineSources(valueRows, sensorRows) {
+    return [
+      ...applyStationValues(stationIndex, valueRows ?? []),
+      ...normalizeSensors(sensorRows ?? []),
+      ...(config.value.showStatic
+        ? normalizePois(poiItems ?? [], toIso1(config.value.locale))
+        : []),
+    ]
+  }
+
   async function refresh({ force = false } = {}) {
     controller?.abort()
     controller = new AbortController()
     const { signal } = controller
     const now = Date.now()
-    const { staleMaxAge, locale } = config.value
+    const { staleMaxAge } = config.value
 
     if (status.value === 'idle') status.value = 'loading'
 
@@ -195,7 +233,7 @@ export const useParkingStore = defineStore('parkings', () => {
       const needsMetadata =
         force || !stationIndex.size || now - metadataFetchedAt > config.value.metadataInterval
 
-      const [metadataRows, valueRows, sensorRows, forecastRows] = await Promise.all([
+      const [freshMetadata, valueRows, sensorRows, forecastRows] = await Promise.all([
         needsMetadata
           ? fetchStationMetadata({ staleMaxAge, now, signal })
           : Promise.resolve(null),
@@ -207,8 +245,9 @@ export const useParkingStore = defineStore('parkings', () => {
           : Promise.resolve(null),
       ])
 
-      if (metadataRows) {
-        stationIndex = buildStationIndex(metadataRows)
+      if (freshMetadata) {
+        metadataRows = freshMetadata
+        stationIndex = buildStationIndex(metadataRows, toIso1(config.value.locale))
         metadataFetchedAt = now
       }
       if (forecastRows) {
@@ -225,14 +264,9 @@ export const useParkingStore = defineStore('parkings', () => {
         // Grouping is a progressive enhancement; parkings still render.
       })
 
-      const combined = [
-        ...applyStationValues(stationIndex, valueRows),
-        ...normalizeSensors(sensorRows),
-        ...(config.value.showStatic ? normalizePois(poiItems, locale) : []),
-      ]
-
-      parkings.value = decorate(combined, now)
-      reconcileSelectedParkings()
+      lastValueRows = valueRows
+      lastSensorRows = sensorRows
+      parkings.value = decorate(combineSources(valueRows, sensorRows), now)
       municipalities.value = collectMunicipalities(parkings.value)
       lastRefresh.value = now
       status.value = 'ready'
@@ -274,20 +308,24 @@ export const useParkingStore = defineStore('parkings', () => {
   /**
    * The URL and the `parkings` attribute both carry station codes, because that
    * is what the API and the operators use. Internally a parking is keyed by a
-   * source-prefixed id, so once the data is in, translate any code that is
-   * still sitting in the selection.
+   * source-prefixed id, so any code sitting in a selection has to be translated.
+   *
+   * Watched rather than called after each fetch: attributes are applied once the
+   * first fetch has already finished, so a code-based selection would otherwise
+   * match nothing until the next poll — an empty list for a whole minute.
    */
   function reconcileSelectedParkings() {
-    if (!selectedParkingIds.value.length) return
+    if (!parkings.value.length) return
 
     const ids = new Set(parkings.value.map((p) => p.id))
     const byScode = new Map(parkings.value.map((p) => [p.scode, p.id]))
 
-    const mapped = selectedParkingIds.value.map((value) =>
-      ids.has(value) ? value : (byScode.get(value) ?? value)
-    )
-    if (mapped.some((value, i) => value !== selectedParkingIds.value[i])) {
-      selectedParkingIds.value = mapped
+    for (const selection of [selectedParkingIds, excludedParkingIds]) {
+      if (!selection.value.length) continue
+      const mapped = selection.value.map((value) =>
+        ids.has(value) ? value : (byScode.get(value) ?? value)
+      )
+      if (mapped.some((value, i) => value !== selection.value[i])) selection.value = mapped
     }
   }
 
@@ -299,6 +337,8 @@ export const useParkingStore = defineStore('parkings', () => {
    * localised display name meant `municipalities="Bolzano - Bozen"` silently
    * matched nothing as soon as `language="it"` renamed it to "Bolzano".
    */
+  watch([parkings, selectedParkingIds, excludedParkingIds], reconcileSelectedParkings)
+
   function municipalityIdsFor(entries) {
     if (!geo) return []
 
@@ -310,7 +350,7 @@ export const useParkingStore = defineStore('parkings', () => {
       add(entry.id, entry.id)
       add(entry.n, entry.id)
       for (const variant of Object.values(entry.nm ?? {})) add(variant, entry.id)
-      add(municipalityDisplayName(entry, config.value.locale), entry.id)
+      add(municipalityDisplayName(entry, toIso1(config.value.locale)), entry.id)
     }
 
     return entries.map((entry) => lookup.get(String(entry).trim().toLowerCase())).filter(Boolean)
@@ -363,11 +403,15 @@ export const useParkingStore = defineStore('parkings', () => {
   })
 
   const visibleParkings = computed(() => {
+    const hidden = new Set(excludedParkingIds.value)
+
     // An explicit parking selection overrides every other filter: the user has
-    // named exactly what they want on their dashboard.
+    // named exactly what they want on their dashboard. Exclusions still apply.
     const pinned = new Set(selectedParkingIds.value)
     if (pinned.size) {
-      return parkings.value.filter((parking) => pinned.has(parking.id))
+      return parkings.value.filter(
+        (parking) => pinned.has(parking.id) && !hidden.has(parking.id)
+      )
     }
 
     const municipalityIds = new Set(selectedMunicipalityIds.value)
@@ -377,6 +421,7 @@ export const useParkingStore = defineStore('parkings', () => {
     const term = searchTerm.value.trim().toLowerCase()
 
     return parkings.value.filter((parking) => {
+      if (hidden.has(parking.id)) return false
       if (!config.value.showStatic && parking.category === CATEGORY.STATIC) {
         return false
       }
@@ -390,6 +435,12 @@ export const useParkingStore = defineStore('parkings', () => {
       }
       return true
     })
+  })
+
+  /** Resolved excluded parkings, so the filter can list them by name. */
+  const excludedParkings = computed(() => {
+    const ids = new Set(excludedParkingIds.value)
+    return parkings.value.filter((parking) => ids.has(parking.id))
   })
 
   const selectedParkings = computed(() => {
@@ -449,6 +500,8 @@ export const useParkingStore = defineStore('parkings', () => {
     selectedParkingIds,
     focusedParkingId,
     selectedOrigins,
+    excludedParkings,
+    excludedParkingIds,
     searchTerm,
     parkingOptions,
     refresh,
@@ -462,5 +515,6 @@ export const useParkingStore = defineStore('parkings', () => {
     toggleMunicipality: (id, multi) => toggle(selectedMunicipalityIds, id, multi),
     toggleParking: (id, multi) => toggle(selectedParkingIds, id, multi),
     toggleOrigin: (id, multi) => toggle(selectedOrigins, id, multi),
+    toggleExcluded: (id, multi) => toggle(excludedParkingIds, id, multi),
   }
 })

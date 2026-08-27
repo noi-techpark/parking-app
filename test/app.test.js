@@ -48,6 +48,7 @@ const STATION_META = [
     scoordinate: { x: 11.33818, y: 46.49869 },
     'smetadata.capacity': 100,
     'smetadata.municipality': 'Bolzano - Bozen',
+    'smetadata.name_de': 'Parkplatz Zentrum',
   },
   {
     scode: 'SBB:04028',
@@ -149,6 +150,9 @@ describe('parking app end to end (map stubbed)', () => {
   afterEach(() => {
     element?.remove()
     document.body.innerHTML = ''
+    // The URL is shared jsdom state, and it deliberately outranks attributes:
+    // left dirty, one test's selection silently seeds the next one.
+    window.history.replaceState(null, '', '/')
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
     mapCalls.fitBounds = 0
@@ -180,7 +184,7 @@ describe('parking app end to end (map stubbed)', () => {
   }
 
   it('renders a card for each parking, whatever shape its data has', () => {
-    expect(cards()).toHaveLength(2)
+    expect(cards()).toHaveLength(STATION_META.length)
     expect(text()).toContain('Parcheggio Centro')
     expect(text()).toContain('Rosé')
   })
@@ -198,8 +202,8 @@ describe('parking app end to end (map stubbed)', () => {
   it('groups parkings into the municipalities that contain them', async () => {
     // Derived from geometry, not from the inconsistent metadata strings.
     expect(text()).toMatch(/Bolzano/)
-    // Four filter dimensions, each behind its own pill.
-    expect(pills()).toHaveLength(4)
+    // Five filter dimensions, each behind its own pill.
+    expect(pills()).toHaveLength(5)
 
     const panel = await openFacet(/Municipalit/i)
     expect(panel).not.toBeNull()
@@ -229,7 +233,7 @@ describe('parking app end to end (map stubbed)', () => {
     chip.click()
     await settle()
     expect(shadow().querySelector('.active-filters .chip')).toBeNull()
-    expect(cards()).toHaveLength(2)
+    expect(cards()).toHaveLength(STATION_META.length)
   })
 
   it('builds a custom dashboard from hand-picked parkings', async () => {
@@ -252,7 +256,7 @@ describe('parking app end to end (map stubbed)', () => {
     await settle()
 
     expect(shadow().querySelector('.detail')).not.toBeNull()
-    expect(mapProps.current.parkings).toHaveLength(2)
+    expect(mapProps.current.parkings).toHaveLength(STATION_META.length)
   })
 
   it('draws a forecast sparkline on the list card, with an axis', async () => {
@@ -377,10 +381,100 @@ describe('parking app end to end (map stubbed)', () => {
     await settle()
 
     expect(locked.shadowRoot.querySelectorAll('.filter-pill')).toHaveLength(0)
-    expect(locked.shadowRoot.querySelector('.filter-bar')).toBeNull()
+    // The language switcher is not a filter and survives the lock — an embed
+    // that wants it gone pins `language` instead.
+    expect(locked.shadowRoot.querySelectorAll('.filter-slot')).toHaveLength(0)
     // The results themselves are still there.
     expect(locked.shadowRoot.querySelectorAll('.parking-card').length).toBeGreaterThan(0)
     locked.remove()
+  })
+
+  it('switches every visible language at once', async () => {
+    // The point of the switch is that it reaches the data too: the station's
+    // own German name has to replace the Italian one alongside the chrome.
+    expect(text()).toContain('Parcheggio Centro')
+
+    const gear = shadow().querySelector('.lang-trigger')
+    expect(gear).toBeTruthy()
+    gear.click()
+    await settle()
+
+    const german = [...shadow().querySelectorAll('.lang-option')].find((o) =>
+      o.textContent.includes('Deutsch')
+    )
+    german.click()
+    await settle()
+
+    expect(text()).toContain('Parkplatz Zentrum')
+    expect(text()).not.toContain('Parcheggio Centro')
+    expect(text()).toContain('Gemeinden')
+  })
+
+  it('lets an embed pin the language and take the switcher away', async () => {
+    element.remove()
+    const pinned = document.createElement('bolzano-parking-app')
+    Object.defineProperty(pinned, 'clientWidth', { value: 1400, configurable: true })
+    pinned.setAttribute('language', 'deu')
+    document.body.appendChild(pinned)
+    await until(() => pinned.shadowRoot?.querySelectorAll('.parking-card').length)
+    await settle()
+
+    expect(pinned.shadowRoot.textContent).toContain('Parkplatz Zentrum')
+    expect(pinned.shadowRoot.querySelector('.lang-trigger')).toBeNull()
+    pinned.remove()
+  })
+
+  it('hides an excluded parking and offers it back through the filter', async () => {
+    expect(cards().length).toBeGreaterThan(1)
+
+    const shell = [...shadow().querySelectorAll('.parking-card-shell')].find((el) =>
+      el.textContent.includes('Parcheggio Centro')
+    )
+    const menu = shell.querySelector('.card-actions-trigger')
+    expect(menu).toBeTruthy()
+    menu.click()
+    await settle()
+    shell.querySelector('.card-menu-item').click()
+    await settle()
+
+    // Gone from the results, but still named by the chip and the filter, which
+    // is the only way back.
+    expect(cards().some((c) => c.textContent.includes('Parcheggio Centro'))).toBe(false)
+    expect(text()).toMatch(/Hidden: Parcheggio Centro/)
+
+    const panel = await openFacet(/Excluded/i)
+    expect(panel.textContent).toMatch(/Parcheggio Centro/)
+  })
+
+  it('keeps a hidden parking hidden even when it is explicitly selected', async () => {
+    element.remove()
+    const conflicting = document.createElement('bolzano-parking-app')
+    Object.defineProperty(conflicting, 'clientWidth', { value: 1400, configurable: true })
+    // Exclusion has to win, or the control cannot be trusted.
+    conflicting.setAttribute('parkings', 'S1,SBB:04028')
+    conflicting.setAttribute('excluded', 'S1')
+    document.body.appendChild(conflicting)
+    await until(() => conflicting.shadowRoot?.querySelectorAll('.parking-card').length)
+    await settle()
+
+    const shown = [...conflicting.shadowRoot.querySelectorAll('.parking-card')]
+    expect(shown).toHaveLength(1)
+    expect(shown[0].textContent).toContain('Rosé')
+    conflicting.remove()
+  })
+
+  it('withholds the card menu when the exclusion filter is hidden', async () => {
+    // Otherwise a visitor could hide a parking with no way to bring it back.
+    element.remove()
+    const noEscape = document.createElement('bolzano-parking-app')
+    Object.defineProperty(noEscape, 'clientWidth', { value: 1400, configurable: true })
+    noEscape.setAttribute('filters', 'municipality')
+    document.body.appendChild(noEscape)
+    await until(() => noEscape.shadowRoot?.querySelectorAll('.parking-card').length)
+    await settle()
+
+    expect(noEscape.shadowRoot.querySelector('.card-actions-trigger')).toBeNull()
+    noEscape.remove()
   })
 
   it('exposes only the filters it is told to', async () => {

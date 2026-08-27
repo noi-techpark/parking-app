@@ -9,6 +9,7 @@
     "verify:bundle": "node scripts/verify-bundle.mjs",
     "preview": "vite preview",
     "geo:build": "node scripts/build-municipalities.mjs",
+    "geo:check": "node scripts/check-geo-coverage.mjs",
     "verify:live": "node scripts/verify-live.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
