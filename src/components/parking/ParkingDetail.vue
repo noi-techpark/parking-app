@@ -100,13 +100,14 @@ const directionsUrl = computed(
 
 .detail .head {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.25rem;
   align-items: flex-start;
 }
 
 .detail .titles {
   flex: 1;
   min-width: 0;
+  margin-right: 0.5rem;
 }
 
 .detail h2 {
@@ -126,10 +127,15 @@ const directionsUrl = computed(
   font-style: italic;
 }
 
-/* Aligned with the close button rather than the heading's first line. */
+/* Same box as the close button beside it, or the two icons sit on different
+   baselines: the header aligns to its top, not to its centre. */
 .detail .head .card-actions {
   flex-shrink: 0;
-  align-self: center;
+}
+
+.detail .head .card-actions-trigger {
+  width: 2rem;
+  height: 2rem;
 }
 
 .detail .close {
