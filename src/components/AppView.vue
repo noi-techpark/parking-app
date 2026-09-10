@@ -210,7 +210,6 @@ const root = ref(null)
 const mapRef = ref(null)
 const sheetRef = ref(null)
 const openFacet = ref(null)
-const selectedStatuses = ref([])
 const width = ref(1200)
 
 const showStaticEnabled = computed(() => parseBool(props.showStatic, true))
@@ -317,12 +316,12 @@ const allFacets = computed(() => [
     key: 'status',
     title: t('filters.status'),
     options: statusOptions.value,
-    selected: selectedStatuses.value,
+    selected: store.selectedStatuses,
     searchable: false,
-    value: summarise(selectedStatuses.value, statusOptions.value),
-    toggle: toggleStatus,
+    value: summarise(store.selectedStatuses, statusOptions.value),
+    toggle: (id) => store.toggleStatus(id),
     clear: () => {
-      selectedStatuses.value = []
+      store.selectedStatuses = []
     },
   },
 ])
@@ -376,11 +375,7 @@ function clearAllFilters() {
 }
 
 const listed = computed(() => {
-  let result = store.visibleParkings
-  if (selectedStatuses.value.length) {
-    const wanted = new Set(selectedStatuses.value)
-    result = result.filter((p) => wanted.has(p.category))
-  }
+  const result = store.visibleParkings
 
   // Whatever is selected stays at the top, so picking a marker on the map never
   // means hunting for its card in a list of hundreds.
@@ -413,12 +408,6 @@ const selectedBoundaries = computed(() => {
     })
     .filter(Boolean)
 })
-
-function toggleStatus(id) {
-  selectedStatuses.value = selectedStatuses.value.includes(id)
-    ? selectedStatuses.value.filter((s) => s !== id)
-    : [...selectedStatuses.value, id]
-}
 
 // Selecting opens the detail; it does not add to the dashboard selection, which
 // is what the "specific parkings" filter is for.
@@ -455,9 +444,11 @@ const panelInner = computed(() => () => {
     return h(ParkingDetail, {
       parking: selected.value,
       now: now.value,
+      actions: showCardActions.value,
       onClose: () => {
         store.focusedParkingId = null
       },
+      onHide: onHideParking,
     })
   }
 
@@ -618,7 +609,15 @@ const urlState = IS_STANDALONE
         ),
         type: 'list',
       },
-      status: { ref: selectedStatuses, type: 'list' },
+      status: {
+        ref: writable(
+          () => store.selectedStatuses,
+          (v) => {
+            store.selectedStatuses = v
+          },
+        ),
+        type: 'list',
+      },
       // Parkings go in by station code rather than the internal id: it is what
       // the API, the `parkings` attribute and the operators all use. The store
       // reconciles codes back to ids once the data has loaded.
@@ -701,8 +700,8 @@ onMounted(async () => {
   const wantedStatuses = parseList(props.status).filter((value) =>
     Object.values(CATEGORY).includes(value),
   )
-  if (wantedStatuses.length && !selectedStatuses.value.length) {
-    selectedStatuses.value = wantedStatuses
+  if (wantedStatuses.length && !store.selectedStatuses.length) {
+    store.selectedStatuses = wantedStatuses
   }
 
   const wantedExclusions = parseList(props.excluded)
@@ -751,7 +750,7 @@ const selectionKey = computed(() =>
     store.selectedMunicipalityIds.join(','),
     store.selectedParkingIds.join(','),
     store.selectedOrigins.join(','),
-    selectedStatuses.value.join(','),
+    store.selectedStatuses.join(','),
   ].join('|'),
 )
 

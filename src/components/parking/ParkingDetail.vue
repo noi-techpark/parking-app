@@ -16,6 +16,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
           </span>
         </p>
       </div>
+      <ParkingActions
+        v-if="actions"
+        :parking="parking"
+        @hide="$emit('hide', parking)"
+      />
       <button type="button" class="close" :aria-label="t('common.close')" @click="$emit('close')">
         ×
       </button>
@@ -53,15 +58,18 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AvailabilityCard from '@/components/parking/AvailabilityCard.vue'
+import ParkingActions from '@/components/parking/ParkingActions.vue'
 import StalenessNote from '@/components/parking/StalenessNote.vue'
 import ForecastChart from '@/components/parking/ForecastChart.vue'
 
 const props = defineProps({
   parking: { type: Object, required: true },
   now: { type: Number, default: () => Date.now() },
+  /** Whether to offer the ⋮ menu, on the same terms as the list card. */
+  actions: { type: Boolean, default: false },
 })
 
-defineEmits(['close'])
+defineEmits(['close', 'hide'])
 
 const { t } = useI18n()
 
@@ -116,6 +124,12 @@ const directionsUrl = computed(
 
 .detail .approx {
   font-style: italic;
+}
+
+/* Aligned with the close button rather than the heading's first line. */
+.detail .head .card-actions {
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .detail .close {

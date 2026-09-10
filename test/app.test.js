@@ -82,6 +82,12 @@ const FORECAST_ROWS = [30, 60, 90, 120].map((minutes, i) => ({
   mvalue: 60 + i * 5,
 }))
 
+/**
+ * Tourism POIs, empty except where a test needs a parking with no reading at
+ * all — the only way to get a `static` one into the fixture.
+ */
+let poiItems = []
+
 function routeFetch(url) {
   const href = String(url)
   // The bulk forecast request is the one filtering on tname.re.
@@ -91,7 +97,7 @@ function routeFetch(url) {
   }
   if (href.includes('ParkingStation')) return { data: STATION_VALUES }
   if (href.includes('ParkingSensor')) return { data: [] }
-  if (href.includes('ODHActivityPoi')) return { Items: [] }
+  if (href.includes('ODHActivityPoi')) return { Items: poiItems }
   return { data: [] }
 }
 
@@ -119,6 +125,7 @@ describe('parking app end to end (map stubbed)', () => {
   let element
 
   beforeEach(async () => {
+    poiItems = []
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url) => ({
@@ -463,6 +470,25 @@ describe('parking app end to end (map stubbed)', () => {
     conflicting.remove()
   })
 
+  it('offers the same hide action from the detail view', async () => {
+    const card = cards().find((c) => c.textContent.includes('Parcheggio Centro'))
+    card.click()
+    await settle()
+
+    const detail = shadow().querySelector('.detail')
+    expect(detail.textContent).toContain('Parcheggio Centro')
+
+    detail.querySelector('.card-actions-trigger').click()
+    await settle()
+    detail.querySelector('.card-menu-item').click()
+    await settle()
+
+    // Hiding what is on screen has to close it, not leave the detail open on a
+    // parking that no longer exists anywhere else.
+    expect(shadow().querySelector('.detail')).toBeNull()
+    expect(cards().some((c) => c.textContent.includes('Parcheggio Centro'))).toBe(false)
+  })
+
   it('withholds the card menu when the exclusion filter is hidden', async () => {
     // Otherwise a visitor could hide a parking with no way to bring it back.
     element.remove()
@@ -475,6 +501,49 @@ describe('parking app end to end (map stubbed)', () => {
 
     expect(noEscape.shadowRoot.querySelector('.card-actions-trigger')).toBeNull()
     noEscape.remove()
+  })
+
+  it('applies the status filter to the map, not only to the list', async () => {
+    // The map draws `visibleParkings`; a status filter the list applied on its
+    // own left the markers — and their cluster counts — behind.
+    element.remove()
+    poiItems = [
+      {
+        Id: 'POI1',
+        Detail: { en: { Title: 'Parcheggio Talvera' } },
+        GpsInfo: [{ Longitude: 11.34, Latitude: 46.503 }],
+      },
+    ]
+    const { TAG_NAME } = await import('@/main.js')
+    element = document.createElement(TAG_NAME)
+    Object.defineProperty(element, 'clientWidth', { value: 1400, configurable: true })
+    document.body.appendChild(element)
+    await until(() => shadow()?.querySelectorAll('.parking-card').length === 3)
+    await settle()
+
+    expect(mapProps.current.parkings).toHaveLength(3)
+
+    await openFacet(/Status/i)
+    await tickOption(/Live/)
+
+    expect(cards()).toHaveLength(2)
+    expect(mapProps.current.parkings).toHaveLength(2)
+    expect(mapProps.current.parkings.map((p) => p.name)).not.toContain('Parcheggio Talvera')
+  })
+
+  it('keeps every status option counted while one of them is selected', async () => {
+    // Counting the post-filter list would zero every option the user did not
+    // pick, leaving no way to see what selecting it would bring back.
+    await openFacet(/Status/i)
+    await tickOption(/Live/)
+
+    // The panel stays open, so the options can be read straight back.
+    const options = [...shadow().querySelectorAll('.filter-panel .option')]
+    const count = (match) =>
+      options.find((o) => o.textContent.match(match))?.querySelector('.count')?.textContent
+
+    expect(count(/Live/)).toBe('2')
+    expect(count(/No live data/)).toBe('0')
   })
 
   it('exposes only the filters it is told to', async () => {

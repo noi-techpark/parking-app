@@ -81,6 +81,12 @@ export const useParkingStore = defineStore('parkings', () => {
   const focusedParkingId = ref(null)
   const selectedOrigins = ref([])
   /**
+   * Freshness buckets to keep. Lives here rather than in the view because the
+   * map draws `visibleParkings`: a filter the list applied on its own narrowed
+   * the cards while leaving the markers — and the cluster counts — untouched.
+   */
+  const selectedStatuses = ref([])
+  /**
    * Parkings the visitor never wants to see.
    *
    * Always wins over every other filter, including an explicit parking
@@ -402,7 +408,8 @@ export const useParkingStore = defineStore('parkings', () => {
       .sort((a, b) => b.count - a.count)
   })
 
-  const visibleParkings = computed(() => {
+  /** Everything the filters keep, before the status facet narrows it. */
+  const filteredParkings = computed(() => {
     const hidden = new Set(excludedParkingIds.value)
 
     // An explicit parking selection overrides every other filter: the user has
@@ -437,6 +444,12 @@ export const useParkingStore = defineStore('parkings', () => {
     })
   })
 
+  const visibleParkings = computed(() => {
+    const statuses = new Set(selectedStatuses.value)
+    if (!statuses.size) return filteredParkings.value
+    return filteredParkings.value.filter((parking) => statuses.has(parking.category))
+  })
+
   /** Resolved excluded parkings, so the filter can list them by name. */
   const excludedParkings = computed(() => {
     const ids = new Set(excludedParkingIds.value)
@@ -465,9 +478,10 @@ export const useParkingStore = defineStore('parkings', () => {
       .sort((a, b) => a.name.localeCompare(b.name))
   )
 
+  /** Counted before the status facet, so its own options keep their totals. */
   const counts = computed(() => {
     const result = { live: 0, delayed: 0, static: 0, total: 0 }
-    for (const parking of visibleParkings.value) {
+    for (const parking of filteredParkings.value) {
       result[parking.category] = (result[parking.category] ?? 0) + 1
       result.total++
     }
@@ -500,6 +514,7 @@ export const useParkingStore = defineStore('parkings', () => {
     selectedParkingIds,
     focusedParkingId,
     selectedOrigins,
+    selectedStatuses,
     excludedParkings,
     excludedParkingIds,
     searchTerm,
@@ -515,6 +530,7 @@ export const useParkingStore = defineStore('parkings', () => {
     toggleMunicipality: (id, multi) => toggle(selectedMunicipalityIds, id, multi),
     toggleParking: (id, multi) => toggle(selectedParkingIds, id, multi),
     toggleOrigin: (id, multi) => toggle(selectedOrigins, id, multi),
+    toggleStatus: (id, multi) => toggle(selectedStatuses, id, multi),
     toggleExcluded: (id, multi) => toggle(excludedParkingIds, id, multi),
   }
 })
