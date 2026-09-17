@@ -1,0 +1,94 @@
+/*
+SPDX-FileCopyrightText: NOI Techpark <digital@noi.bz.it>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+*/
+
+@import 'tailwindcss';
+
+@source '../../**/*.{vue,js}';
+
+/*
+ * Design tokens.
+ *
+ * The Open Data Hub blue and the pastel availability hues are carried over from
+ * the original design. What changed is how they are paired with text: measured
+ * against WCAG, *none* of the original fills reached 4.5:1 with white text
+ * (green was 1.59:1), while all of them clear 6:1 with dark ink. So the pastel
+ * fills now always carry ink text, and each hue gained a `-strong` variant —
+ * darkened at constant hue until it reaches 4.5:1 with white — for borders,
+ * small badges and anywhere white text is unavoidable.
+ *
+ * Every token is a CSS custom property on the host, so an integrator can
+ * restyle the component without forking it. `static` keeps Tailwind from
+ * tree-shaking tokens that no utility class happens to reference — the map and
+ * chart layers read them from JS via getComputedStyle, and integrators need
+ * them present to override.
+ */
+@theme static {
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue', arial,
+    sans-serif;
+
+  /* Brand */
+  --color-primary: #009cdd;
+  --color-primary-strong: #007cb0;
+  --color-primary-soft: #e6f5fc;
+
+  /* Availability. Pastel fill + ink text; `-strong` for white text. */
+  --color-avail-high: #8be277;
+  --color-avail-high-strong: #2d8519;
+  --color-avail-mid: #e2cd77;
+  --color-avail-mid-strong: #89731a;
+  --color-avail-low: #e28377;
+  --color-avail-low-strong: #d63c29;
+  --color-avail-none: #e4e6e9;
+  --color-avail-none-strong: #747474;
+
+  /* Staleness / alerting */
+  --color-warn: #f6e3b4;
+  --color-warn-strong: #8a6100;
+  --color-danger: #f7d5d0;
+  --color-danger-strong: #b3271a;
+
+  /* Neutrals */
+  --color-ink: #1b1f24;
+  --color-ink-muted: #747474;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f5f6f7;
+  --color-border: #e2e5e9;
+
+  /* Restrained rounding: the previous 10/20px read as soft and toy-like at
+     card sizes. */
+  --radius-button: 6px;
+  --radius-box: 10px;
+  --radius-card: 6px;
+  --radius-chip: 4px;
+}
+
+/*
+ * The component renders into a shadow root, so the usual `html`/`body` reset
+ * does not reach it. `:host` is the component's own box.
+ */
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:host([hidden]) {
+  display: none;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
