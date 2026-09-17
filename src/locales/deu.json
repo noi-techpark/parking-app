@@ -1,0 +1,89 @@
+{
+  "common": {
+    "appName": "Parkplätze in Echtzeit",
+    "loading": "Wird geladen",
+    "poweredBy": "Bereitgestellt von",
+    "retry": "Erneut versuchen",
+    "clear": "Zurücksetzen",
+    "clearAll": "Alles zurücksetzen",
+    "close": "Schließen",
+    "search": "Parkplätze oder Orte suchen",
+    "noResults": "Keine Parkplätze entsprechen diesen Filtern.",
+    "loadFailed": "Parkdaten konnten nicht geladen werden.",
+    "done": "Fertig"
+  },
+  "filters": {
+    "title": "Filter",
+    "municipalities": "Gemeinden",
+    "origins": "Datenquellen",
+    "status": "Status",
+    "searchMunicipality": "Gemeinde suchen",
+    "selectedCount": "{count} ausgewählt",
+    "showMore": "Alle {count} anzeigen",
+    "showLess": "Weniger anzeigen",
+    "none": "Noch nichts zu filtern",
+    "all": "Alle",
+    "results": "Keine Parkplätze | 1 Parkplatz | {count} Parkplätze",
+    "removeFilter": "Filter {name} entfernen",
+    "parkings": "Bestimmte Parkplätze",
+    "searchParking": "Parkplatz suchen",
+    "language": "Sprache",
+    "excluded": "Ausgeschlossene Parkplätze",
+    "searchExcluded": "Auszuschließenden Parkplatz suchen",
+    "noneExcluded": "Keine",
+    "hiddenChip": "Ausgeblendet: {name}"
+  },
+  "status": {
+    "live": "Echtzeit",
+    "delayed": "Verzögert",
+    "static": "Keine Echtzeitdaten",
+    "liveHint": "In den letzten {age} aktualisiert",
+    "delayedHint": "Echtzeitquelle, aber der letzte Messwert ist alt",
+    "staticHint": "Nur Standort — dieser Parkplatz meldet keine Verfügbarkeit"
+  },
+  "availability": {
+    "free": "frei",
+    "freeOf": "{free} von {capacity} frei",
+    "percentFree": "{percent}% frei",
+    "occupancyLow": "Ruhig",
+    "occupancyMedium": "Füllt sich",
+    "occupancyHigh": "Fast voll",
+    "unknownCapacity": "Kapazität nicht veröffentlicht",
+    "noRealtime": "Keine Echtzeitdaten",
+    "full": "Voll",
+    "noData": "keine Daten"
+  },
+  "staleness": {
+    "updatedSecondsAgo": "Vor {value} s aktualisiert | Vor {value} s aktualisiert",
+    "updatedMinutesAgo": "Vor einer Minute aktualisiert | Vor {value} Minuten aktualisiert",
+    "updatedHoursAgo": "Vor einer Stunde aktualisiert | Vor {value} Stunden aktualisiert",
+    "updatedDaysAgo": "Gestern aktualisiert | Vor {value} Tagen aktualisiert",
+    "staleWarning": "Dieser Messwert ist veraltet",
+    "never": "Nie aktualisiert"
+  },
+  "detail": {
+    "capacity": "Kapazität",
+    "source": "Quelle",
+    "municipality": "Gemeinde",
+    "approximate": "Ungefähre Zuordnung",
+    "forecast": "Erwartete Verfügbarkeit",
+    "forecastNone": "Keine Prognose für diesen Parkplatz",
+    "forecastLoading": "Prognose wird geladen…",
+    "forecastRange": "Erwarteter Bereich",
+    "navigate": "Route",
+    "spaces": "Stellplätze",
+    "onStreet": "Straßenparkplatz",
+    "station": "Parkhaus",
+    "poi": "Parkfläche",
+    "now": "jetzt",
+    "inMinutes": "+{value} Min.",
+    "spacesTotal": "{count} Stellplatz | {count} Stellplätze",
+    "actions": "Weitere Aktionen",
+    "hide": "Diesen Parkplatz ausblenden"
+  },
+  "map": {
+    "label": "Parkplatzkarte",
+    "fitSelection": "Auf Auswahl zoomen",
+    "resetView": "Alles anzeigen"
+  }
+}
